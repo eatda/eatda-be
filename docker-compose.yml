@@ -1,0 +1,40 @@
+version: '3'
+services:
+  # database container
+  db:
+    container_name: db
+    image: mysql:5.7
+    restart: always
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+    ports:
+      - "3307:3306"
+    env_file:
+      - .env
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  web:
+    container_name: web
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      DATABASE_NAME: mysql
+      DATABASE_USER: 'root'
+      DATABASE_PASSWORD: mysql
+      DATABASE_PORT: 3306
+      DATABASE_HOST: db
+      DJANGO_SETTINGS_MODULE: eatda_be.settings.dev
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+
+volumes:
+  app:
+  dbdata:

@@ -1,0 +1,36 @@
+version: '3'
+services:
+
+  web:
+    container_name: web
+    build:
+      context: ./
+      dockerfile: Dockerfile.prod
+    command: gunicorn eatda_be.wsgi:application --bind 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: eatda_be.settings.prod
+    env_file:
+      - .env
+    volumes:
+      - static:/home/app/web/static
+      - media:/home/app/web/media
+    expose:
+      - 8000
+    entrypoint:
+      - sh
+      - config/docker/entrypoint.prod.sh
+
+  nginx:
+    container_name: nginx
+    build: ./config/nginx
+    volumes:
+      - static:/home/app/web/static
+      - media:/home/app/web/media
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+
+volumes:
+  static:
+  media:
