@@ -4,7 +4,7 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /app
 WORKDIR /app
 
-# dependencies for psycopg2-binary
+# dependencies for psycopg2-binary & autossh
 RUN apk add --no-cache mariadb-connector-c-dev
 RUN apk update && apk add python3 python3-dev mariadb-dev build-base && pip3 install mysqlclient && apk del python3-dev mariadb-dev build-base
 
@@ -17,3 +17,6 @@ RUN pip install -r requirements.txt
 
 # Now copy in our code, and run it
 COPY . /app/
+
+# Run entrypoint.sh
+CMD ["./config/docker/entrypoint.sh"]
