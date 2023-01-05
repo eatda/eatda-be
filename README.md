@@ -25,9 +25,9 @@
 
 2. docker build
   - for the first time
-  ```
-  docker-compose build
-  ```
+     ```
+     docker-compose build
+     ```
   
 3. run project
    ```shell
