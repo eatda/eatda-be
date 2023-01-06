@@ -26,19 +26,19 @@ class UserInfo(accounts.models.BaseModel):
         DEEPHIGH = 4    #매우 적극적인 활동 및 운동
 
     # id                                                            #로그인테이블 ID
-    name = models.CharField(max_length=20)                          #이름
+    name = models.CharField(max_length=20)                                                  #이름
     character_id = models.ForeignKey(Character, on_delete=models.CASCADE)                   #캐릭터 ID
-    height = models.FloatField(null=True)                                    #키
-    weight = models.FloatField(null=True)                                    #몸무게
-    gender = models.CharField(max_length=2)                         #성별
-    is_diabetes = models.BooleanField(default=False)                #당뇨환자여부
-    activity = models.IntegerField(null=True, choices = ActivityType.choices)  #활동수준
+    height = models.FloatField(default=None, null=True)                                     #키
+    weight = models.FloatField(default=None, null=True)                                     #몸무게
+    gender = models.CharField(max_length=2)                                                 #성별
+    is_diabetes = models.BooleanField(default=False)                                        #당뇨환자여부
+    activity = models.IntegerField(default=None, null=True, choices = ActivityType.choices) #활동수준
     # account_user_group_id                                         #그룹코드 ID
 
 
 # 식후 혈당량 테이블
 class BloodSugarLevel(accounts.models.BaseModel):
-    class TimelineType(models.IntegerChoices):                     #시간대
+    class TimelineType(models.IntegerChoices): #시간대
         MORNING = 0         #아침
         AFTERNOON = 1       #점심
         NIGHT = 2           #저녁
