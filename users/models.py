@@ -19,21 +19,26 @@ class Character(accounts.models.BaseModel):
 # 유저 정보 테이블
 class UserInfo(accounts.models.BaseModel):
     class ActivityType(models.IntegerChoices):      #활동수준
+        NOCHOICES = -1  #선택을 안 했을 때(비 당뇨인의 경우)
         DEEPLOW = 0     #활동이 적거나 운동을 안하는 경우
         LOW = 1         #가벼운 활동 및 운동
         MIDDLE = 2      #보통의 활동 및 운동
         HIGH = 3        #적극적인 활동 및 운동
         DEEPHIGH = 4    #매우 적극적인 활동 및 운동
 
-    # id                                                            #로그인테이블 ID
-    name = models.CharField(max_length=20)                                                  #이름
-    character_id = models.ForeignKey(Character, on_delete=models.CASCADE)                   #캐릭터 ID
-    height = models.FloatField(default=None, null=True)                                     #키
-    weight = models.FloatField(default=None, null=True)                                     #몸무게
-    gender = models.CharField(max_length=2)                                                 #성별
-    is_diabetes = models.BooleanField(default=False)                                        #당뇨환자여부
-    activity = models.IntegerField(default=None, null=True, choices = ActivityType.choices) #활동수준
-    # account_user_group_id                                         #그룹코드 ID
+    class GenderType(models.TextChoices):           #성별
+            FEMALE = 'f'
+            MALE = 'm'
+
+    # id                                                                                            #로그인테이블 ID
+    name = models.CharField(max_length=20)                                                          #이름
+    character_id = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)               #캐릭터 ID
+    height = models.FloatField(default=None, null=True)                                             #키
+    weight = models.FloatField(default=None, null=True)                                             #몸무게
+    gender = models.CharField(max_length=1, choices = GenderType.choices)                           #성별
+    is_diabetes = models.BooleanField(default=False)                                                #당뇨환자여부
+    activity = models.IntegerField(default=ActivityType.NOCHOICES, choices = ActivityType.choices)  #활동수준
+    # account_user_group_id                                                                         #그룹코드 ID
 
 
 # 식후 혈당량 테이블
@@ -45,8 +50,8 @@ class BloodSugarLevel(accounts.models.BaseModel):
     # account_user_id
     # diet_id
     time = models.DateTimeField()
-    level = models.IntegerField(max_length=4)                       #혈당량
-    timeline = models.IntegerField(choices = TimelineType.choices)  #시간대
+    level = models.IntegerField(max_length=4, default=None, null=True)  #혈당량
+    timeline = models.IntegerField(choices = TimelineType.choices)      #시간대
 
 
 # 좋아요 테이블
