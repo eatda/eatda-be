@@ -49,7 +49,7 @@ class BloodSugarLevel(accounts.models.BaseModel):
         NIGHT = 2           #저녁
     # account_user_id
     # diet_id
-    time = models.DateTimeField()
+    time = models.DateTimeField(default = None, null = True)            #혈당측정시간
     level = models.IntegerField(max_length=4, default=None, null=True)  #혈당량
     timeline = models.IntegerField(choices = TimelineType.choices)      #시간대
 
