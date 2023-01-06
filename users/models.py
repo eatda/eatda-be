@@ -27,12 +27,12 @@ class UserInfo(accounts.models.BaseModel):
 
     # id                                                            #로그인테이블 ID
     name = models.CharField(max_length=20)                          #이름
-    # character_id                                                  #캐릭터 ID
-    height = models.FloatField()                                    #키
-    weight = models.FloatField()                                    #몸무게
+    character_id = models.ForeignKey(Character, on_delete=models.CASCADE)                   #캐릭터 ID
+    height = models.FloatField(null=True)                                    #키
+    weight = models.FloatField(null=True)                                    #몸무게
     gender = models.CharField(max_length=2)                         #성별
     is_diabetes = models.BooleanField(default=False)                #당뇨환자여부
-    activity = models.IntegerField(choices = ActivityType.choices)  #활동수준
+    activity = models.IntegerField(null=True, choices = ActivityType.choices)  #활동수준
     # account_user_group_id                                         #그룹코드 ID
 
 
@@ -80,6 +80,6 @@ class OurPick(accounts.models.BaseModel):
 
 # 유저 알러지 테이블
 class UserAllergy(accounts.models.BaseModel):
-    id = models.PositiveIntegerField(primary_key=True)      #ID
     # account_user_id                                       #유저
     # allergy_id                                            #알러지 ID
+    pass
