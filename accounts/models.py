@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.db import models
 
@@ -13,22 +14,30 @@ class BaseModel(models.Model):
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, social_id, email):
-        # id 존재 확인
+    def create_user(self, email, social_id=None, password=None):
+        # social_id 존재 확인
         if not social_id:
             raise ValueError('Users must have social_id')
+        # email 존재 확인
+        if not email:
+            raise ValueError('Users must have email')
 
         user = self.model(
-            id=social_id,
+            social_id=social_id,
             email=email
         )
+        # password 존재 한다면
+        if password:
+            user.set_password(password)
+
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, social_id=None, email=None):
+    def create_superuser(self, email, social_id=None, password=None):
         superuser = self.create_user(
-            id=social_id,
+            social_id=social_id,
             email=email,
+            password=password
         )
 
         superuser.is_staff = True
@@ -38,9 +47,14 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    id = models.CharField(max_length=50, unique=True, null=False, blank=False, primary_key=True)
-    password = models.CharField(max_length=128, blank=True, null=True)
+    class SocialProviderType(models.TextChoices):  # 제공 업체
+        KAKAO = 'kakao'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    social_id = models.CharField(max_length=64, unique=True)
+    social_provider = models.CharField(max_length=64, choices=SocialProviderType.choices, default=SocialProviderType.KAKAO)
     email = models.EmailField(max_length=255, unique=True, null=False, blank=False)
+    password = models.CharField(max_length=128, blank=True, null=True)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -50,7 +64,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['id']
+    REQUIRED_FIELDS = ['social_id']
 
     def __str__(self):
         return self.email
+
+
+class Group(models.Model):
+    code = models.CharField(max_length=10, unique=True)
