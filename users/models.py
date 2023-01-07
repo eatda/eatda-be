@@ -3,6 +3,10 @@ from django.db import models
 # Create your models here.
 import accounts.models
 
+# 그룹 테이블
+class Group(accounts.models.BaseModel):
+    code = models.CharField(max_length=10, unique=True)     #그룹코드
+
 # 캐릭터 테이블
 class Character(accounts.models.BaseModel):
     class CharacterType(models.IntegerChoices): #캐릭터 이미지
@@ -17,7 +21,7 @@ class Character(accounts.models.BaseModel):
 
 
 # 유저 정보 테이블
-class UserInfo(accounts.models.BaseModel):
+class Info(accounts.models.BaseModel):
     class ActivityType(models.IntegerChoices):      #활동수준
         NOCHOICES = -1  #선택을 안 했을 때(비 당뇨인의 경우)
         DEEPLOW = 0     #활동이 적거나 운동을 안하는 경우
@@ -47,6 +51,7 @@ class BloodSugarLevel(accounts.models.BaseModel):
         MORNING = 0         #아침
         AFTERNOON = 1       #점심
         NIGHT = 2           #저녁
+
     # account_user_id
     # diet_id
     time = models.DateTimeField(default = None, null = True)            #혈당측정시간
@@ -84,7 +89,7 @@ class OurPick(accounts.models.BaseModel):
 
 
 # 유저 알러지 테이블
-class UserAllergy(accounts.models.BaseModel):
+class Allergy(accounts.models.BaseModel):
     # account_user_id                                       #유저
     # allergy_id                                            #알러지 ID
     pass
