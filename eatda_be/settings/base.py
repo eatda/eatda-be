@@ -31,6 +31,9 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = ['*']
 
+# System User Default Model
+AUTH_USER_MODEL = 'accounts.User'
+
 
 # Application definition
 
