@@ -3,6 +3,7 @@ Django==3.2.16
 django-environ==0.9.0
 gunicorn==20.1.0
 mysqlclient==2.1.1
+Pillow==9.4.0
 pytz==2022.7
 PyYAML==6.0
 sqlparse==0.4.3
