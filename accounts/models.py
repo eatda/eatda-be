@@ -68,7 +68,3 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-
-
-class Group(models.Model):
-    code = models.CharField(max_length=10, unique=True)
