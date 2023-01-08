@@ -4,7 +4,7 @@ from django.db import models
 
 # Create your models here.
 import accounts.models
-
+import diets
 
 # 그룹 테이블
 class Group(accounts.models.BaseModel):
@@ -38,15 +38,15 @@ class Info(accounts.models.BaseModel):
         FEMALE = 'f'
         MALE = 'm'
 
-    id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  # 로그인테이블 ID
+    id = models.OneToOneField(accounts.User, on_delete=models.CASCADE, primary_key=True)  # 로그인테이블 ID
     name = models.CharField(max_length=20)  # 이름
-    character_id = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)  # 캐릭터 ID
+    character = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)  # 캐릭터 ID
     height = models.FloatField(default=None, null=True)  # 키
     weight = models.FloatField(default=None, null=True)  # 몸무게
     gender = models.CharField(max_length=1, choices=GenderType.choices)  # 성별
     is_diabetes = models.BooleanField(default=False)  # 당뇨환자여부
     activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices)  # 활동수준
-    account_user_group_id = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)  # 그룹코드 ID
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)  # 그룹코드 ID
 
 
 # 식후 혈당량 테이블
@@ -56,8 +56,8 @@ class BloodSugarLevel(accounts.models.BaseModel):
         AFTERNOON = 1  # 점심
         NIGHT = 2  # 저녁
 
-    account_user_id = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
-    diet_id = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 id
+    user = models.ForeignKey(accounts.User, on_delete=models.SET_NULL, null=True)  # 유저 id
+    diet = models.ForeignKey(diets.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
     level = models.IntegerField(max_length=4, default=None, null=True)  # 혈당량
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
@@ -79,7 +79,7 @@ class Like(accounts.models.BaseModel):
         AFTERNOON = 1  # 점심
         NIGHT = 2  # 저녁
 
-    account_user_id = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
+    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
     react = models.IntegerField(choices=ReactionType.choices)  # 좋아요 반응
     target = models.IntegerField(choices=TargetType.choices)  # 좋아요 대상 필드
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
@@ -87,13 +87,13 @@ class Like(accounts.models.BaseModel):
 
 # 선호 레시피 테이블
 class OurPick(accounts.models.BaseModel):
-    diet_id = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
-    account_user_id = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
+    diet = models.ForeignKey(diets.Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
+    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
     pass
 
 
 # 유저 알러지 테이블
 class Allergy(accounts.models.BaseModel):
-    account_user_id = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy_id = models.ForeignKey(Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
+    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
+    allergy_id = models.ForeignKey(diets.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
     pass
