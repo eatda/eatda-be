@@ -1,5 +1,5 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
-from accounts.models import BaseModel
+from account.models import BaseModel
 from django.db import models
 from django.contrib.auth import get_user_model
 from diets.models import Data, Allergy

@@ -1,4 +1,4 @@
-from accounts.models import BaseModel
+from account.models import BaseModel
 from users.models import Info
 from django.db import models
 

@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserCreationForm, UserChangeForm
 from .models import User
+import users.models
 
 
 class UserAdmin(BaseUserAdmin):
@@ -28,5 +29,5 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
 
 
-admin.site.register(User, UserAdmin)
+admin.site.register(User, UserAdmin, users.models.Group)
 admin.site.unregister(Group)
