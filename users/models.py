@@ -1,5 +1,9 @@
 import uuid
 
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+from accounts.models import BaseModel
+
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -9,12 +13,12 @@ import diets
 
 User = get_user_model()
 # 그룹 테이블
-class Group(accounts.models.BaseModel):
+class Group(BaseModel):
     code = models.CharField(max_length=10, unique=True)  # 그룹코드
 
 
 # 캐릭터 테이블
-class Character(accounts.models.BaseModel):
+class Character(BaseModel):
     class CharacterType(models.IntegerChoices):  # 캐릭터 이미지
         MOM = 0  # 엄마
         DAD = 1  # 아빠
@@ -27,7 +31,7 @@ class Character(accounts.models.BaseModel):
 
 
 # 유저 정보 테이블
-class Info(accounts.models.BaseModel):
+class Info(BaseModel):
     class ActivityType(models.IntegerChoices):  # 활동수준
         NOCHOICES = -1  # 선택을 안 했을 때(비 당뇨인의 경우)
         DEEPLOW = 0  # 활동이 적거나 운동을 안하는 경우
@@ -52,21 +56,21 @@ class Info(accounts.models.BaseModel):
 
 
 # 식후 혈당량 테이블
-class BloodSugarLevel(accounts.models.BaseModel):
+class BloodSugarLevel(BaseModel):
     class TimelineType(models.IntegerChoices):  # 시간대
         MORNING = 0  # 아침
         AFTERNOON = 1  # 점심
         NIGHT = 2  # 저녁
 
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
-    diet = models.ForeignKey(diets.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
+    diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
-    level = models.IntegerField(max_length=4, default=None, null=True)  # 혈당량
+    level = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(300)], default=None, null=True)  # 혈당량
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
 
 
 # 좋아요 테이블
-class Like(accounts.models.BaseModel):
+class Like(BaseModel):
     class ReactionType(models.IntegerChoices):  # 좋아요 반응
         HEART = 0  # 하트
         SMILE = 1  # 웃음
@@ -88,14 +92,14 @@ class Like(accounts.models.BaseModel):
 
 
 # 선호 레시피 테이블
-class OurPick(accounts.models.BaseModel):
-    diet = models.ForeignKey(diets.Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
+class OurPick(BaseModel):
+    diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
     pass
 
 
 # 유저 알러지 테이블
-class Allergy(accounts.models.BaseModel):
+class Allergy(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy_id = models.ForeignKey(diets.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
+    allergy_id = models.ForeignKey(diets.models.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
     pass
