@@ -39,7 +39,7 @@ class Info(BaseModel):
         FEMALE = 'f'
         MALE = 'm'
 
-    id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)  # 로그인테이블 ID
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)  # 로그인테이블 ID
     name = models.CharField(max_length=20)  # 이름
     character = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)  # 캐릭터 ID
     height = models.FloatField(default=None, null=True)  # 키
