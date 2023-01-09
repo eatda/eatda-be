@@ -1,17 +1,12 @@
-import uuid
-
 from django.core.validators import MinValueValidator, MaxValueValidator
-
 from accounts.models import BaseModel
-
 from django.db import models
 from django.contrib.auth import get_user_model
-
-# Create your models here.
-import accounts.models
-import diets
+import diets.models
 
 User = get_user_model()
+
+
 # 그룹 테이블
 class Group(BaseModel):
     code = models.CharField(max_length=10, unique=True)  # 그룹코드
@@ -65,7 +60,8 @@ class BloodSugarLevel(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
     diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
-    level = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(300)], default=None, null=True)  # 혈당량
+    level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(300)], default=None,
+                                null=True)  # 혈당량
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
 
 
@@ -86,7 +82,7 @@ class Like(BaseModel):
         NIGHT = 2  # 저녁
 
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
-    react = models.IntegerField(choices=ReactionType.choices)  # 좋아요 반응
+    react = models.IntegerField(choices=ReactionType.choices, default=ReactionType.HEART)  # 좋아요 반응
     target = models.IntegerField(choices=TargetType.choices)  # 좋아요 대상 필드
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
 
@@ -95,11 +91,9 @@ class Like(BaseModel):
 class OurPick(BaseModel):
     diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    pass
 
 
 # 유저 알러지 테이블
 class Allergy(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy_id = models.ForeignKey(diets.models.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
-    pass
+    allergy = models.ForeignKey(diets.models.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
