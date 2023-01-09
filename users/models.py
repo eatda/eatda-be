@@ -1,4 +1,7 @@
 import uuid
+
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 from accounts.models import BaseModel
 
 from django.db import models
@@ -62,7 +65,7 @@ class BloodSugarLevel(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
     diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
-    level = models.IntegerField(max_length=4, default=None, null=True)  # 혈당량
+    level = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(300)], default=None, null=True)  # 혈당량
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
 
 
