@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from accounts.models import BaseModel
 from django.db import models
 from django.contrib.auth import get_user_model
-import diets.models
+from diets.models import Data, Allergy
 
 User = get_user_model()
 
@@ -58,7 +58,7 @@ class BloodSugarLevel(BaseModel):
         NIGHT = 2  # 저녁
 
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
-    diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 id
+    diet = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
     level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(300)], default=None,
                                 null=True)  # 혈당량
@@ -89,11 +89,11 @@ class Like(BaseModel):
 
 # 선호 레시피 테이블
 class OurPick(BaseModel):
-    diet = models.ForeignKey(diets.models.Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
+    diet = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
 
 
 # 유저 알러지 테이블
 class Allergy(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy = models.ForeignKey(diets.models.Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
+    allergy = models.ForeignKey(Allergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID

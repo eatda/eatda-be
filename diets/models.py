@@ -1,6 +1,6 @@
 from accounts.models import BaseModel
+from users.models import Info
 from django.db import models
-import users.models
 
 
 # 필터 카테고리 테이블
@@ -28,7 +28,7 @@ class Data(BaseModel):
     ingredient = models.JSONField(default=list)  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
-    user = models.ForeignKey(users.models.Info, on_delete=models.SET_NULL, null=True, default=None)  # 작성자
+    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True, default=None)  # 작성자
     type = models.ForeignKey(Filter, on_delete=models.SET_NULL, null=True, related_name='type', default=None)  # 음식 종류
     flavor = models.ForeignKey(Filter, on_delete=models.SET_NULL, null=True, related_name='flavor', default=None)  # 맛
     carbohydrate_type = models.ForeignKey(Filter, on_delete=models.SET_NULL,
@@ -47,7 +47,7 @@ class SideData(BaseModel):
     ingredient = models.JSONField(default=list)  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
-    user = models.ForeignKey(users.models.Info, on_delete=models.SET_NULL, null=True, default=None)  # 작성자
+    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True, default=None)  # 작성자
     type = models.ForeignKey(Filter, on_delete=models.SET_NULL, null=True, related_name='type', default=None)  # 음식 종류
     flavor = models.ForeignKey(Filter, on_delete=models.SET_NULL, null=True, related_name='flavor', default=None)  # 맛
     carbohydrate_type = models.ForeignKey(Filter, on_delete=models.SET_NULL,
