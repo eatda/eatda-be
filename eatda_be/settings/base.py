@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'account.apps.AccountConfig',
     'users.apps.UsersConfig',
-    'diets.apps.DietsConfig'
+    'diet.apps.DietConfig'
 ]
 
 MIDDLEWARE = [
