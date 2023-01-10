@@ -12,7 +12,8 @@ class FilterCategory(BaseModel):
 class Filter(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 필터 이름
-    filter_category = models.ForeignKey(FilterCategory, on_delete=models.CASCADE)  # 필터 카테고리 id
+    image = models.ImageField(upload_to='images/', default='default.jpg')  # 필터 이미지
+    category = models.ForeignKey(FilterCategory, on_delete=models.CASCADE)  # 필터 카테고리 id
 
 
 # 주 식단 테이블
