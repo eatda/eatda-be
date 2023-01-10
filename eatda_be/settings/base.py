@@ -32,7 +32,7 @@ DEBUG = env('DEBUG')
 ALLOWED_HOSTS = ['*']
 
 # System User Default Model
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'account.User'
 
 
 # Application definition
@@ -44,9 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts.apps.AccountsConfig',
-    'users.apps.UsersConfig',
-    'diets.apps.DietsConfig'
+    'account.apps.AccountConfig',
+    'user.apps.UserConfig',
+    'diet.apps.DietConfig'
 ]
 
 MIDDLEWARE = [
