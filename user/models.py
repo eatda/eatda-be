@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from account.models import BaseModel
 from django.db import models
 from django.contrib.auth import get_user_model
-from diet.models import Data
+from diet.models import Data, DietAllergy
 
 User = get_user_model()
 
@@ -94,6 +94,6 @@ class OurPick(BaseModel):
 
 
 # 유저 알러지 테이블
-class Allergy(BaseModel):
+class UserAllergy(BaseModel):
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy = models.ForeignKey('diet.Allergy', on_delete=models.SET_NULL, null=True)  # 알러지 ID
+    allergy = models.ForeignKey(DietAllergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID

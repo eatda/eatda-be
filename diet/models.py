@@ -64,6 +64,6 @@ class MainSide(BaseModel):
 
 
 # 알러지 테이블
-class Allergy(BaseModel):
+class DietAllergy(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 알러지 이름
