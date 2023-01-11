@@ -8,8 +8,8 @@ from django.db import models
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
-    created_by = models.CharField(max_length=20, default='')
-    updated_by = models.CharField(max_length=20, default='')
+    created_by = models.CharField(max_length=20, default='admin')
+    updated_by = models.CharField(max_length=20, default='admin')
 
     class Meta:
         abstract = True
