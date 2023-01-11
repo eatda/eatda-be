@@ -21,8 +21,8 @@ class Character(BaseModel):
         BROTHER2 = 3  # 형제2
         BROTHER3 = 4  # 형제3
 
-    id = models.PositiveIntegerField(primary_key=True)  # id
-    type = models.IntegerField(choices=CharacterType.choices)  # 캐릭터 이미지
+    id = models.PositiveIntegerField(primary_key=True, choices=CharacterType.choices)  # id
+    image = models.ImageField(upload_to='images/', default='default.jpg')  # 캐릭터 이미지
 
 
 # 유저 정보 테이블
@@ -89,11 +89,11 @@ class Like(BaseModel):
 
 # 선호 레시피 테이블
 class OurPick(BaseModel):
-    diet = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 ID
-    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
+    diet = models.ForeignKey(Data, on_delete=models.CASCADE)  # 식단 ID
+    user = models.ForeignKey(Info, on_delete=models.CASCADE)  # 유저
 
 
 # 유저 알러지 테이블
 class UserAllergy(BaseModel):
-    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저
-    allergy = models.ForeignKey(DietAllergy, on_delete=models.SET_NULL, null=True)  # 알러지 ID
+    user = models.ForeignKey(Info, on_delete=models.CASCADE)  # 유저
+    allergy = models.ForeignKey(DietAllergy, on_delete=models.CASCADE)  # 알러지 ID
