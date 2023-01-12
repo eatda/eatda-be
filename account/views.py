@@ -85,7 +85,7 @@ class LoginView(APIView):
 class AuthView(APIView):
     def get(self, request):
         # access token을 decode해서 유저 id 추출
-        access_token = request.headers.get('access_token')
+        access_token = request.META['HTTP_AUTHORIZATION']
         if not access_token:
             return Response({"message": "토큰 없음"}, status=status.HTTP_400_BAD_REQUEST)
         try:
