@@ -10,9 +10,8 @@ from diet.serializers import DietAllergySerializer
 
 
 # 알러지 리스트 불러오는 api
-class DietAllergyList(APIView):
+class DietAllergyView(APIView):
     def get(self, request):
-
         try:
             dietAllergy = DietAllergy.objects.all()
             serializer = DietAllergySerializer(dietAllergy, many=True)
