@@ -14,6 +14,7 @@ RUN apk update && apk add python3 python3-dev mariadb-dev build-base && pip3 ins
 COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN apk add tzdata
 
 # Now copy in our code, and run it
 COPY . /app/
