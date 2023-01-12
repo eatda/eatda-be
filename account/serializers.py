@@ -7,8 +7,6 @@ User = get_user_model()
 
 # 회원 가입
 class RegisterSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(read_only=True)
-
     social_id = serializers.CharField(
         required=True,
         write_only=True,
@@ -21,7 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'social_id', 'email']
+        fields = ['social_id', 'email']
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -45,8 +43,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 # 로그인
 class LoginSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(read_only=True)
-
     social_id = serializers.CharField(
         required=True,
         write_only=True,
@@ -59,7 +55,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'social_id', 'email']
+        fields = ['social_id', 'email']
 
     def validate(self, data):
         social_id = data.get('social_id', None)
@@ -75,7 +71,7 @@ class LoginSerializer(serializers.ModelSerializer):
         access_token = str(token.access_token)  # access 토큰
 
         data = {
-            'user': user,
+            'user' : user,
             'refresh_token': refresh_token,
             'access_token': access_token,
         }
