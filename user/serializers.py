@@ -11,8 +11,9 @@ class InfoAuthSerializer(serializers.ModelSerializer):
     character = serializers.SerializerMethodField(read_only=True)
 
     def get_character(self, obj):
+        request = self.context.get('request')
         if obj.character.image:
-            return obj.character.image
+            return request.build_absolute_uri(obj.character.image.url)
         return None
 
     class Meta:
@@ -27,8 +28,9 @@ class InfoSerializer(serializers.ModelSerializer):
     character = serializers.SerializerMethodField(read_only=True)
 
     def get_character(self, obj):
+        request = self.context.get('request')
         if obj.character.image:
-            return obj.character.image
+            return request.build_absolute_uri(obj.character.image.url)
         return None
 
     class Meta:

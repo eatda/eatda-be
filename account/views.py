@@ -25,7 +25,7 @@ class RegisterView(APIView):
         # print('로그인 유저 저장')
 
         # 유저 전체 정보 (info) 저장
-        info_serializer = InfoSerializer(data=request.data)
+        info_serializer = InfoSerializer(data=request.data, context={"request": request})
         if info_serializer.is_valid(raise_exception=False):
             user_info = info_serializer.save(request.data)
             # print('유저 인포 저장')
@@ -46,7 +46,7 @@ class RegisterView(APIView):
 
         # 유저 정보 얻어오기
         info = Info.objects.get(user_id=user.id)
-        info_serializer = InfoAuthSerializer(info)
+        info_serializer = InfoAuthSerializer(info, context={"request": request})
 
         # jwt token 발급
         token = TokenObtainPairSerializer.get_token(user)  # 토큰 생성
@@ -71,7 +71,7 @@ class LoginView(APIView):
             # 유저 정보 얻어오기
             user_id = serializer.validated_data.get('user').id
             info = Info.objects.get(user_id=user_id)
-            info_serializer = InfoAuthSerializer(info)
+            info_serializer = InfoAuthSerializer(info, context={"request": request})
 
             res_data = {
                 'access_token': access_token,
