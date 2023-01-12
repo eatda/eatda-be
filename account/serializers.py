@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -66,12 +66,12 @@ class LoginSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError("user account not exist")
 
-        token = TokenObtainPairSerializer.get_token(user)  # 토큰 생성
+        token = RefreshToken.for_user(user)  # 토큰 생성
         refresh_token = str(token)  # refresh 토큰
         access_token = str(token.access_token)  # access 토큰
 
         data = {
-            'user' : user,
+            'user': user,
             'refresh_token': refresh_token,
             'access_token': access_token,
         }

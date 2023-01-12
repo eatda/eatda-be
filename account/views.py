@@ -94,10 +94,9 @@ class AuthView(APIView):
             user_id = payload.get('user_id')
 
             # 유저 정보 얻어오기
-            user = get_object_or_404(User, pk=user_id)
+            get_object_or_404(User, pk=user_id)
             return Response({
                 'user_id': user_id,
-                'user_info': user.info
             }, status=status.HTTP_200_OK)
         except jwt.exceptions.InvalidSignatureError:
             # 토큰 유효하지 않음
