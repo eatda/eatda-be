@@ -21,6 +21,7 @@ class InfoAuthSerializer(serializers.ModelSerializer):
 # 유저 전체 정보
 class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
+    character_id = serializers.IntegerField(write_only=True)
     character = serializers.SerializerMethodField(read_only=True)
 
     def get_character(self, obj):
