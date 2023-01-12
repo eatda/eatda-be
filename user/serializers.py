@@ -8,10 +8,12 @@ User = get_user_model()
 # 유저 ID 정보
 class InfoAuthSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    character = serializers.SerializerMethodField()
+    character = serializers.SerializerMethodField(read_only=True)
 
     def get_character(self, obj):
-        return obj.character.image
+        if obj.character.image:
+            return obj.character.image
+        return None
 
     class Meta:
         model = Info
@@ -25,7 +27,9 @@ class InfoSerializer(serializers.ModelSerializer):
     character = serializers.SerializerMethodField(read_only=True)
 
     def get_character(self, obj):
-        return obj.character.image
+        if obj.character.image:
+            return obj.character.image
+        return None
 
     class Meta:
         model = Info
