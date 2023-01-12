@@ -16,7 +16,6 @@ class UserCharacterView(APIView):
             group_id = request.GET.get('groupid')
             characterList = Character.objects.exclude(id=group_id)
             serializer = CharacterSerializer(characterList, many=True,context={'request': request})
-            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except:
