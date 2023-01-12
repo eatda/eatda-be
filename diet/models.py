@@ -2,6 +2,11 @@ from account.models import BaseModel
 from django.db import models
 
 
+def articles_image_path(instance, filename):
+    # MEDEIA_ROOT/user_<pk>/ 경로로 <filename> 이름으로 업로드
+    return f'user_{instance.pk}/{filename}'
+
+
 # 필터 카테고리 테이블
 class FilterCategory(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
@@ -12,14 +17,14 @@ class FilterCategory(BaseModel):
 class Filter(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 필터 이름
-    image = models.ImageField(upload_to='images/', default='default.jpg')  # 필터 이미지
+    image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 필터 이미지
     category = models.ForeignKey(FilterCategory, on_delete=models.CASCADE)  # 필터 카테고리 id
 
 
 # 주 식단 테이블
 class Data(BaseModel):
     name = models.JSONField(default=dict)  # 음식 이름
-    image = models.ImageField(upload_to='images/', default='default.jpg')  # 음식 이미지
+    image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 음식 이미지
     carbohydrate = models.IntegerField(default=0)  # 탄수화물
     protein = models.IntegerField(default=0)  # 단백질
     province = models.IntegerField(default=0)  # 지방
@@ -40,7 +45,7 @@ class Data(BaseModel):
 # 사이드 식단 테이블
 class SideData(BaseModel):
     name = models.JSONField(default=dict)  # 음식 이름
-    image = models.ImageField(upload_to='images/', default='default.jpg')  # 음식 이미지
+    image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 음식 이미지
     carbohydrate = models.IntegerField(default=0)  # 탄수화물
     protein = models.IntegerField(default=0)  # 단백질
     province = models.IntegerField(default=0)  # 지방
@@ -66,5 +71,4 @@ class MainSide(BaseModel):
 
 # 알러지 테이블
 class DietAllergy(BaseModel):
-    id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 알러지 이름

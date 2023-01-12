@@ -7,6 +7,11 @@ from diet.models import Data, DietAllergy
 User = get_user_model()
 
 
+def articles_image_path(instance, filename):
+    # MEDEIA_ROOT/user_<pk>/ 경로로 <filename> 이름으로 업로드
+    return f'user_{instance.pk}/{filename}'
+
+
 # 그룹 테이블
 class Group(BaseModel):
     code = models.CharField(max_length=10, unique=True)  # 그룹코드
@@ -14,15 +19,7 @@ class Group(BaseModel):
 
 # 캐릭터 테이블
 class Character(BaseModel):
-    class CharacterType(models.IntegerChoices):  # 캐릭터 이미지
-        MOM = 0  # 엄마
-        DAD = 1  # 아빠
-        BROTHER1 = 2  # 형제1
-        BROTHER2 = 3  # 형제2
-        BROTHER3 = 4  # 형제3
-
-    id = models.PositiveIntegerField(primary_key=True, choices=CharacterType.choices)  # id
-    image = models.ImageField(upload_to='images/', default='default.jpg')  # 캐릭터 이미지
+    image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 캐릭터 이미지
 
 
 # 유저 정보 테이블
