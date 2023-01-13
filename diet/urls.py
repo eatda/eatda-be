@@ -1,7 +1,7 @@
 from django.urls import path
 
-from diet.views import DietAllergyList
+from diet.views import DietAllergyView
 
 urlpatterns = [
-    path('allergy', DietAllergyList.as_view())
+    path('allergy', DietAllergyView.as_view())
 ]
