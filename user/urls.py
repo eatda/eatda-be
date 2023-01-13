@@ -6,4 +6,4 @@ from user.views import UserCharacterView
 
 urlpatterns = [
     path('character', UserCharacterView.as_view())
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
