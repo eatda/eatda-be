@@ -9,6 +9,7 @@ services:
     command: gunicorn eatda_be.wsgi:application --bind 0.0.0.0:8000
     environment:
       DJANGO_SETTINGS_MODULE: eatda_be.settings.prod
+      TZ: "Asia/Seoul"
     env_file:
       - .env
     volumes:
