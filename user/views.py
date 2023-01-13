@@ -15,7 +15,7 @@ class UserCharacterView(APIView):
         try:
             # 그룹 내 유저들의 캐릭터 ID 받아오기
             group_id = request.GET.get('groupid')
-            groupList = Info.objects.filter(group=group_id).values() #해당하는 그룹id의 유저들 get
+            groupList = Info.objects.filter(group=group_id).values()  # 해당하는 그룹id의 유저들 get
             selected_character = list()
 
             for users in groupList:
@@ -32,6 +32,4 @@ class UserCharacterView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-
+            return Response({"error": "DB error"}, status=status.HTTP_400_BAD_REQUEST)
