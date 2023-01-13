@@ -71,12 +71,12 @@ class InfoSerializer(serializers.ModelSerializer):
 
 # 캐릭터 리스트 정보
 class CharacterSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField('get_image_url')
+    image = serializers.SerializerMethodField(read_only=True)
 
-    def get_image_url(self, obj):
+    def get_image(self, obj):
         request = self.context.get('request')
         if obj.image:
-            return obj.image.url
+            return request.build_absolute_uri(obj.image.url)
         return None
 
     class Meta:
