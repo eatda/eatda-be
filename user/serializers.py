@@ -81,7 +81,7 @@ class CharacterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Character
-        fields = ['id', 'image_url']
+        fields = ['id', 'image']
 
 
 # 유저 알러지 정보
