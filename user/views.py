@@ -26,10 +26,10 @@ class UserCharacterView(APIView):
             allCharacterList = Character.objects.all()
 
             for select in selected_character:
-                unselected = allCharacterList.exclude(id=select)
+                allCharacterList = allCharacterList.exclude(id=select)
 
-            serializer = CharacterSerializer(unselected, many=True, context={'request': request})
+            serializer = CharacterSerializer(allCharacterList, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        except:
-            return Response({"error": "DB error"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)
