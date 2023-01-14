@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from user.models import Info, UserAllergy
+from user.models import Info, UserAllergy, Character
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -67,6 +67,21 @@ class InfoSerializer(serializers.ModelSerializer):
         except:
             raise serializers.ValidationError("Cannot save user")
         return info
+
+
+# 캐릭터 리스트 정보
+class CharacterSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
+    class Meta:
+        model = Character
+        fields = ['id', 'image']
 
 
 # 유저 알러지 정보
