@@ -33,6 +33,7 @@ class Info(BaseModel):
         DEEPHIGH = 4  # 매우 적극적인 활동 및 운동
 
     class GenderType(models.TextChoices):  # 성별
+        NOCHOICES = ''
         FEMALE = 'f'
         MALE = 'm'
 
@@ -41,9 +42,9 @@ class Info(BaseModel):
     character = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)  # 캐릭터 ID
     height = models.FloatField(default=None, null=True)  # 키
     weight = models.FloatField(default=None, null=True)  # 몸무게
-    gender = models.CharField(max_length=1, choices=GenderType.choices)  # 성별
+    gender = models.CharField(max_length=1, choices=GenderType.choices, default=GenderType.NOCHOICES, null=True)  # 성별
     is_diabetes = models.BooleanField(default=False)  # 당뇨환자여부
-    activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices)  # 활동수준
+    activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices, null=True)  # 활동수준
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)  # 그룹코드 ID
 
 

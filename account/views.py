@@ -32,16 +32,16 @@ class RegisterView(APIView):
                 user.delete()
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 유저-알러지 정보 저장
-            try:
-                for allergy in request.data['allergy']:
-                    # print(allergy)
-                    user_allergy = UserAllergy(user_id=user.id, allergy_id=allergy["id"])
-                    user_allergy.save()
-            except Exception as e:
-                user_info.delete()
-                user.delete()
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            if request.data["is_diabetes"]:
+                # 유저-알러지 정보 저장
+                try:
+                    for allergy in request.data['allergy']:
+                        user_allergy = UserAllergy(user_id=user.id, allergy_id=allergy["id"])
+                        user_allergy.save()
+                except Exception as e:
+                    user_info.delete()
+                    user.delete()
+                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:  # 유저 정보 저장 시 에러 났다면 -> 로그인 유저 정보도 지우기
             user.delete()
             return Response(info_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -26,6 +26,10 @@ class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     character_id = serializers.IntegerField(write_only=True)
     character = serializers.SerializerMethodField(read_only=True)
+    height = serializers.FloatField(required=False)
+    weight = serializers.FloatField(required=False)
+    gender = serializers.CharField(required=False)
+    activity = serializers.IntegerField(required=False)
 
     def get_character(self, obj):
         request = self.context.get('request')
