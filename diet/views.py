@@ -14,9 +14,9 @@ class DietAllergyList(APIView):
     def get(self, request):
 
         try:
-            dietAllergy = DietAllergy.objects.all()
-            serializer = DietAllergySerializer(dietAllergy, many=True)
+            diet_allergy = DietAllergy.objects.all()
+            serializer = DietAllergySerializer(diet_allergy, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
