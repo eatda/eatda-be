@@ -15,10 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('accounts.urls')),
-    path('users/', include('users.urls')),
-    path('diets/', include('diets.urls'))
+    path('accounts/', include('account.urls')),
+    path('users/', include('user.urls')),
+    path('diets/', include('diet.urls'))
 ]
+
+# 개발 환경 미디어 세팅
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
