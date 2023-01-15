@@ -66,20 +66,20 @@ class UserCharacterView(APIView):
         try:
             # 그룹 내 유저들의 캐릭터 ID 받아오기
             group_id = request.GET.get('groupid')
-            groupList = Info.objects.filter(group=group_id).values()  # 해당하는 그룹id의 유저들 get
+            group_list = Info.objects.filter(group=group_id).values()  # 해당하는 그룹id의 유저들 get
             selected_character = list()
 
-            for users in groupList:
+            for users in group_list:
                 selected_character.append(users['character_id'])
             selected_character.sort()
 
             # 선택된 캐릭터 제외하기
-            allCharacterList = Character.objects.all()
+            all_characterList = Character.objects.all()
 
             for select in selected_character:
-                allCharacterList = allCharacterList.exclude(id=select)
+                all_characterList = all_characterList.exclude(id=select)
 
-            serializer = CharacterSerializer(allCharacterList, many=True, context={'request': request})
+            serializer = CharacterSerializer(all_characterList, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
