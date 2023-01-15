@@ -5,6 +5,7 @@ services:
     build: .
     environment:
       DJANGO_SETTINGS_MODULE: eatda_be.settings.dev
+      TZ: "Asia/Seoul"
     env_file:
       - .env
     restart: always

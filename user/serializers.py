@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from user.models import Info, UserAllergy, Character
+from user.models import Info, UserAllergy, Character, Group
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -62,10 +62,8 @@ class InfoSerializer(serializers.ModelSerializer):
             activity=activity,
             group_id=group_id
         )
-        try:  # 유저 정보 저장
-            info.save()
-        except:
-            raise serializers.ValidationError("Cannot save user")
+        # 유저 정보 저장
+        info.save()
         return info
 
 
@@ -89,3 +87,12 @@ class UserAllergySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAllergy
         fields = ['user_id', 'allergy_id']
+
+
+# 유저 그룹 정보
+class GroupSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Group
+        fields = ['id', 'code']
