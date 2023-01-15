@@ -22,13 +22,15 @@ class RegisterView(APIView):
 
         # 로그인 유저 정보 저장
         user = serializer.save(request.data)
-        # print('로그인 유저 저장')
 
         # 유저 전체 정보 (info) 저장
         info_serializer = InfoSerializer(data=request.data, context={"request": request})
         if info_serializer.is_valid(raise_exception=False):
-            user_info = info_serializer.save(request.data)
-            # print('유저 인포 저장')
+            try:
+                user_info = info_serializer.save(request.data)
+            except Exception as e:
+                user.delete()
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
             # 유저-알러지 정보 저장
             try:
@@ -36,10 +38,10 @@ class RegisterView(APIView):
                     # print(allergy)
                     user_allergy = UserAllergy(user_id=user.id, allergy_id=allergy["id"])
                     user_allergy.save()
-            except:
+            except Exception as e:
                 user_info.delete()
                 user.delete()
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:  # 유저 정보 저장 시 에러 났다면 -> 로그인 유저 정보도 지우기
             user.delete()
             return Response(info_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

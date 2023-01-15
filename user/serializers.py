@@ -62,10 +62,8 @@ class InfoSerializer(serializers.ModelSerializer):
             activity=activity,
             group_id=group_id
         )
-        try:  # 유저 정보 저장
-            info.save()
-        except:
-            raise serializers.ValidationError("Cannot save user")
+        # 유저 정보 저장
+        info.save()
         return info
 
 
