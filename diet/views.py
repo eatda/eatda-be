@@ -70,6 +70,14 @@ class DietDataDetailView(APIView):
             return False
         return True
 
+    def get_menu(self, ingredients):  # 메인메뉴 및 사이드 메뉴 리스트 가져오는 함수
+        ingredient = ingredients
+        menu = []
+
+        for data in ingredient:
+            menu.append(data['title'])
+        return menu
+
     def get_ingredients(self, ingredients, recipe):  # 각 레시피 스텝에 있는 재료 구하는 함수
         recipe = ast.literal_eval(recipe)  # text to json
 
@@ -114,11 +122,16 @@ class DietDataDetailView(APIView):
                     diet.salt += side_menu.salt
                     diet.total_calorie += side_menu.total_calorie
 
-                    diet.name.append(side_menu.name)
-                    diet.ingredient.append({"title": side_menu.name["title"], "datas": side_menu.ingredient})
+                    # ingredient가 비어있으면 title만 보내고, 아니라면 재료도 같이 보내기
+                    if len(side_menu.ingredient) == 0:
+                        diet.ingredient.append({"title": side_menu.name["title"]})
 
+                    else:
+                        diet.ingredient.append({"title": side_menu.name["title"], "datas": side_menu.ingredient})
+
+            diet.menu = self.get_menu(diet.ingredient)
             serializer = DietDataSerializer(diet, context={"request": request})
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)

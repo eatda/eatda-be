@@ -34,6 +34,7 @@ class FilterSerializer(serializers.ModelSerializer):
 
 
 class DietDataSerializer(serializers.ModelSerializer):
+    menu = serializers.SerializerMethodField(read_only=True)
     recipe = serializers.JSONField(default=list)
     tip = serializers.JSONField(default=list)
     image = serializers.SerializerMethodField(read_only=True)
@@ -44,7 +45,10 @@ class DietDataSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.image.url)
         return None
 
+    def get_menu(self, obj):
+        return obj.menu
+
     class Meta:
         model = Data
-        fields = ['id', 'name', 'image', 'carbohydrate', 'protein', 'province', 'salt', 'total_calorie', 'ingredient',
+        fields = ['id', 'name', 'image', 'menu', 'carbohydrate', 'protein', 'province', 'salt', 'total_calorie', 'ingredient',
                   'recipe', 'tip', 'user_id', 'type_id', 'flavor_id', 'carbohydrate_type_id']
