@@ -29,13 +29,12 @@ class UserInfoDetailView(APIView):
 
                     # 유저 알러지 리스트 가져오기
                     allergy_filter = []
-                    for i in range(len(allergy_list)):
-                        allergy=DietAllergy.objects.filter(id=allergy_serializer.data[i].get('allergy_id'))
-                        allergy_data = {
-                            'id': allergy.get().id,
-                            'name': allergy.get().name
+                    for allergy in allergy_serializer.data:
+                        data = {
+                            'id': allergy['allergy_id'],
+                            'name': allergy['allergy_name']
                         }
-                        allergy_filter.append(allergy_data)
+                        allergy_filter.append(data)
 
                     data = {
                         'name': info_serializer.data['name'],
@@ -77,12 +76,12 @@ class UserCharacterView(APIView):
             selected_character.sort()
 
             # 선택된 캐릭터 제외하기
-            all_characterList = Character.objects.all()
+            all_character_list = Character.objects.all()
 
             for select in selected_character:
-                all_characterList = all_characterList.exclude(id=select)
+                all_character_list = all_character_list.exclude(id=select)
 
-            serializer = CharacterSerializer(all_characterList, many=True, context={'request': request})
+            serializer = CharacterSerializer(all_character_list, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
