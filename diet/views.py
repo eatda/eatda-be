@@ -22,7 +22,7 @@ class DietAllergyView(APIView):
             serializer = DietAllergySerializer(diet_allergy, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -57,6 +57,7 @@ class FilterView(APIView):
         return Response(res_data, status=status.HTTP_200_OK)
 
 
+# 식단 상세 정보 가져오는 API
 class DietDataDetailView(APIView):
     def get_object(self, id):  # 오브젝트 존재 확인
         diet = get_object_or_404(Data, pk=id)
@@ -76,7 +77,6 @@ class DietDataDetailView(APIView):
             for ingredient in ingredients:
                 if ingredient["name"] in data["step"]:  # 해당 step에 재료가 있다면
                     data["ingredients"].append(ingredient["name"])
-        print('get', recipe)
         return recipe
 
     def get(self, request, id):  # 레시피 상세 get
@@ -91,10 +91,10 @@ class DietDataDetailView(APIView):
                 diet.recipe = [{"title": diet.name["title"], "process": diet.recipe}]
                 diet.ingredient = [{"title": diet.name["title"], "datas": diet.ingredient}]
 
-            diet.name = [diet.name]  #string
+            diet.name = [diet.name]  # string
 
             if diet.tip != '':
-                diet.tip = ast.literal_eval(diet.tip)  #list
+                diet.tip = ast.literal_eval(diet.tip)  # list
 
             # 사이드 식단 얻기
             if MainSide.objects.filter(main_id=id).exists():
@@ -102,9 +102,17 @@ class DietDataDetailView(APIView):
                 for data in diet_side:
                     side_menu = data.side
 
+                    # 사이드 메뉴의 레시피가 있는 경우 추가
                     if side_menu.recipe != '':
                         side_menu.recipe = self.get_ingredients(side_menu.ingredient, side_menu.recipe)
                         diet.recipe.append({"title": side_menu.name["title"], "process": side_menu.recipe})
+
+                    # 전체 음식의 탄단지 및 칼로리 양 구하기
+                    diet.carbohydrate += side_menu.carbohydrate
+                    diet.protein += side_menu.protein
+                    diet.province += side_menu.province
+                    diet.salt += side_menu.salt
+                    diet.total_calorie += side_menu.total_calorie
 
                     diet.name.append(side_menu.name)
                     diet.ingredient.append({"title": side_menu.name["title"], "datas": side_menu.ingredient})
