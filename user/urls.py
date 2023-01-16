@@ -7,6 +7,6 @@ from user.views import UserCharacterView, UserGroupView, UserInfoDetailView
 
 urlpatterns = [
     path('info/', UserInfoDetailView.as_view()),  # 유저 정보
-    path('character/', UserCharacterView.as_view())  # 캐릭터 정보
+    path('character/', UserCharacterView.as_view()),  # 캐릭터 정보
     path('group/code/', UserGroupView.as_view())  # 그룹 정보
 ]
