@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from diet.models import DietAllergy, Filter, FilterCategory
+from diet.models import DietAllergy, Filter, FilterCategory, Data
 
 
 class DietAllergySerializer(serializers.ModelSerializer):
@@ -31,3 +31,20 @@ class FilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Filter
         fields = ['id', 'name', 'category', 'image']
+
+
+class DietDataSerializer(serializers.ModelSerializer):
+    recipe = serializers.JSONField(default=list)
+    tip = serializers.JSONField(default=list)
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
+    class Meta:
+        model = Data
+        fields = ['id', 'name', 'image', 'carbohydrate', 'protein', 'province', 'salt', 'total_calorie', 'ingredient',
+                  'recipe', 'tip', 'user_id', 'type_id', 'flavor_id', 'carbohydrate_type_id']
