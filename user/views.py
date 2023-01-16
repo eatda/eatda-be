@@ -12,6 +12,7 @@ from user.serializers import CharacterSerializer, GroupSerializer, InfoSerialize
 # 그룹 코드 생성 시 필요한 라이브러리
 import uuid, base64, codecs
 
+
 class UserInfoDetailView(APIView):
     def get(self, request):
         # 인가확인

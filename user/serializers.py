@@ -84,8 +84,6 @@ class CharacterSerializer(serializers.ModelSerializer):
 
 # 유저 알러지 정보
 class UserAllergySerializer(serializers.ModelSerializer):
-    user_id = serializers.SerializerMethodField(read_only=True)
-    allergy_id = serializers.SerializerMethodField(read_only=True)
     allergy_name = serializers.SerializerMethodField(read_only=True)
 
     def get_user_id(self, obj):
