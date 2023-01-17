@@ -8,42 +8,65 @@ User = get_user_model()
 # 유저 ID 정보
 class InfoAuthSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    character = serializers.SerializerMethodField(read_only=True)
-
-    def get_character(self, obj):
-        request = self.context.get('request')
-        if obj.character.image:
-            return request.build_absolute_uri(obj.character.image.url)
-        return None
 
     class Meta:
         model = Info
         fields = ['user_id', 'is_diabetes', 'character']
 
 
-# 유저 전체 정보
-class InfoSerializer(serializers.ModelSerializer):
+# 기본 유저 정보 (비당뇨인 전체 정보)
+class InfoBasicSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    character_id = serializers.IntegerField(write_only=True)
-    character = serializers.SerializerMethodField(read_only=True)
-
-    def get_character(self, obj):
-        request = self.context.get('request')
-        if obj.character.image:
-            return request.build_absolute_uri(obj.character.image.url)
-        return None
+    group_id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character_id', 'character', 'height', 'weight', 'gender', 'is_diabetes',
-                  'activity', 'group_id']
+        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group_id']
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
         email = validated_data.get('email')
         user_id = User.objects.get(social_id=social_id, email=email).id
         name = validated_data.get('name')
-        character_id = validated_data.get('character_id')
+        character = validated_data.get('character')
+        is_diabetes = validated_data.get('is_diabetes')
+        group_id = validated_data.get('group_id')
+
+        info = Info(
+            user_id=user_id,
+            name=name,
+            character=character,
+            is_diabetes=is_diabetes,
+            group_id=group_id
+        )
+        # 유저 정보 저장
+        info.save()
+        return info
+
+
+# 유저 전체 정보 (당뇨인)
+class InfoSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(read_only=True)
+    height = serializers.FloatField(required=True)
+    weight = serializers.FloatField(required=True)
+    group_id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = Info
+        fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'is_diabetes',
+                  'activity', 'group_id']
+
+    def validate(self, data):
+        if data.get("gender") is None or data.get("activity") is None:
+            raise serializers.ValidationError("You have to fill all information")
+        return data
+
+    def save(self, validated_data):
+        social_id = validated_data.get('social_id')
+        email = validated_data.get('email')
+        user_id = User.objects.get(social_id=social_id, email=email).id
+        name = validated_data.get('name')
+        character = validated_data.get('character')
         height = validated_data.get('height')
         weight = validated_data.get('weight')
         gender = validated_data.get('gender')
@@ -54,7 +77,7 @@ class InfoSerializer(serializers.ModelSerializer):
         info = Info(
             user_id=user_id,
             name=name,
-            character_id=character_id,
+            character=character,
             height=height,
             weight=weight,
             gender=gender,
@@ -84,9 +107,20 @@ class CharacterSerializer(serializers.ModelSerializer):
 
 # 유저 알러지 정보
 class UserAllergySerializer(serializers.ModelSerializer):
+    allergy_name = serializers.SerializerMethodField(read_only=True)
+
+    def get_user_id(self, obj):
+        return obj.user.pk
+
+    def get_allergy_id(self, obj):
+        return obj.allergy.pk
+
+    def get_allergy_name(self, obj):
+        return obj.allergy.name
+
     class Meta:
         model = UserAllergy
-        fields = ['user_id', 'allergy_id']
+        fields = ['user_id', 'allergy_id', 'allergy_name']
 
 
 # 유저 그룹 정보

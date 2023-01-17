@@ -84,6 +84,21 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'Refresh-Authorization'
+]
 CORS_ORIGIN_WHITELIST = ['http://localhost:3000', 'https://eatda-fe.vercel.app', 'https://eat-da.co.kr']
 
 ROOT_URLCONF = 'eatda_be.urls'

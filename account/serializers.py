@@ -36,7 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         email = data.get('email', None)
 
         # 이미 존재하는 계정인지 확인
-        if User.objects.filter(social_id=social_id, email=email).exists():
+        if User.objects.filter(social_id=social_id).exists() or User.objects.filter(email=email).exists():
             raise serializers.ValidationError("User already exists")
         return data
 
