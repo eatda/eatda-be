@@ -11,6 +11,7 @@ def articles_image_path(instance, filename):
 class FilterCategory(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 필터 카테고리 이름
+    query_name = models.CharField(max_length=32, default='')  # 필터 카테고리 쿼리 이름 (식단 모델 필드 이름)
 
 
 # 필터 테이블
@@ -18,6 +19,7 @@ class Filter(BaseModel):
     id = models.PositiveIntegerField(primary_key=True)  # id
     name = models.CharField(max_length=32)  # 필터 이름
     image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 필터 이미지
+    image_selected = models.ImageField(upload_to=articles_image_path, default='default1.jpg')  # 필터 선택된 이미지
     category = models.ForeignKey(FilterCategory, on_delete=models.CASCADE)  # 필터 카테고리 id
 
 
@@ -25,11 +27,11 @@ class Filter(BaseModel):
 class Data(BaseModel):
     name = models.JSONField(default=dict)  # 음식 이름
     image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 음식 이미지
-    carbohydrate = models.IntegerField(default=0)  # 탄수화물
-    protein = models.IntegerField(default=0)  # 단백질
-    province = models.IntegerField(default=0)  # 지방
-    salt = models.IntegerField(default=0)  # 나트륨
-    total_calorie = models.IntegerField(default=0)  # 총 칼로리
+    carbohydrate = models.FloatField(default=0)  # 탄수화물
+    protein = models.FloatField(default=0)  # 단백질
+    province = models.FloatField(default=0)  # 지방
+    salt = models.FloatField(default=0)  # 나트륨
+    total_calorie = models.FloatField(default=0)  # 총 칼로리
     ingredient = models.JSONField(default=list)  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
@@ -46,11 +48,11 @@ class Data(BaseModel):
 class SideData(BaseModel):
     name = models.JSONField(default=dict)  # 음식 이름
     image = models.ImageField(upload_to=articles_image_path, default='default.jpg')  # 음식 이미지
-    carbohydrate = models.IntegerField(default=0)  # 탄수화물
-    protein = models.IntegerField(default=0)  # 단백질
-    province = models.IntegerField(default=0)  # 지방
-    salt = models.IntegerField(default=0)  # 나트륨
-    total_calorie = models.IntegerField(default=0)  # 총 칼로리
+    carbohydrate = models.FloatField(default=0)  # 탄수화물
+    protein = models.FloatField(default=0)  # 단백질
+    province = models.FloatField(default=0)  # 지방
+    salt = models.FloatField(default=0)  # 나트륨
+    total_calorie = models.FloatField(default=0)  # 총 칼로리
     ingredient = models.JSONField(default=list)  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
