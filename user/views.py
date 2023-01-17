@@ -73,7 +73,7 @@ class UserCharacterView(APIView):
             selected_character = list()
 
             for users in group_list:
-                selected_character.append(users['character_id'])
+                selected_character.append(users['character'])
             selected_character.sort()
 
             # 선택된 캐릭터 제외하기
@@ -135,3 +135,14 @@ class UserGroupView(APIView):
         # 당뇨인 조회
         is_diabetes = True if group_users.filter(is_diabetes=True).count() == 1 else False
         return Response({"is_diabetes": is_diabetes}, status=status.HTTP_200_OK)
+
+
+# 오늘의 식단 api
+class TodaySelectDietView(APIView):
+    def post(self, request):
+        try:
+            id = request.data['diet_id']
+            print(id)
+            return Response({"success"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)
