@@ -14,11 +14,10 @@ class InfoAuthSerializer(serializers.ModelSerializer):
         fields = ['user_id', 'is_diabetes', 'character']
 
 
-# 기본 유저 정보 (당뇨인 & 비당뇨인)
+# 기본 유저 정보 (비당뇨인 전체 정보)
 class InfoBasicSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     group_id = serializers.IntegerField(required=True)
-    character = serializers.IntegerField(required=True)
 
     class Meta:
         model = Info
@@ -48,17 +47,19 @@ class InfoBasicSerializer(serializers.ModelSerializer):
 # 유저 전체 정보 (당뇨인)
 class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    character = serializers.IntegerField(required=True)
     height = serializers.FloatField(required=True)
     weight = serializers.FloatField(required=True)
-    gender = serializers.CharField(required=True)
-    activity = serializers.IntegerField(required=True)
     group_id = serializers.IntegerField(required=True)
 
     class Meta:
         model = Info
         fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'is_diabetes',
                   'activity', 'group_id']
+
+    def validate(self, data):
+        if data.get("gender") is None or data.get("activity") is None:
+            raise serializers.ValidationError("You have to fill all information")
+        return data
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
