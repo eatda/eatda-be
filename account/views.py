@@ -7,7 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from eatda_be.settings import SECRET_KEY
 from account.serializers import RegisterSerializer, LoginSerializer
-from user.serializers import InfoAuthSerializer, InfoSerializer, UserAllergySerializer
+from user.serializers import InfoAuthSerializer, InfoSerializer, UserAllergySerializer, InfoBasicSerializer
 from user.models import Info, UserAllergy
 from django.contrib.auth import get_user_model
 
@@ -23,8 +23,16 @@ class RegisterView(APIView):
         # 로그인 유저 정보 저장
         user = serializer.save(request.data)
 
-        # 유저 전체 정보 (info) 저장
-        info_serializer = InfoSerializer(data=request.data, context={"request": request})
+        # 유저 정보 (당뇨인 / 비당뇨인) 저장
+        try: 
+            if request.data["is_diabetes"]:  # 당뇨인
+                info_serializer = InfoSerializer(data=request.data, context={"request": request})
+            else:  # 비당뇨인
+                info_serializer = InfoBasicSerializer(data=request.data, context={"request": request})
+        except:
+            user.delete()
+            return Response({"error": "당뇨인 여부 정보를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
         if info_serializer.is_valid(raise_exception=False):
             try:
                 user_info = info_serializer.save(request.data)
@@ -32,16 +40,16 @@ class RegisterView(APIView):
                 user.delete()
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 유저-알러지 정보 저장
-            try:
-                for allergy in request.data['allergy']:
-                    # print(allergy)
-                    user_allergy = UserAllergy(user_id=user.id, allergy_id=allergy["id"])
-                    user_allergy.save()
-            except Exception as e:
-                user_info.delete()
-                user.delete()
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            if request.data["is_diabetes"]:
+                # 유저-알러지 정보 저장
+                try:
+                    for allergy in request.data['allergy']:
+                        user_allergy = UserAllergy(user_id=user.id, allergy_id=allergy["id"])
+                        user_allergy.save()
+                except Exception as e:
+                    user_info.delete()
+                    user.delete()
+                    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:  # 유저 정보 저장 시 에러 났다면 -> 로그인 유저 정보도 지우기
             user.delete()
             return Response(info_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
