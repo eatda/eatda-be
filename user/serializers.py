@@ -92,17 +92,9 @@ class InfoSerializer(serializers.ModelSerializer):
 
 # 캐릭터 리스트 정보
 class CharacterSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField(read_only=True)
-
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-        return None
-
     class Meta:
         model = Character
-        fields = ['id', 'image']
+        fields = ['id']
 
 
 # 유저 알러지 정보
