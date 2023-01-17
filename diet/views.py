@@ -97,9 +97,7 @@ class DietDataDetailView(APIView):
 
             if self.is_json_key_present(diet.name, "title"):
                 diet.recipe = [{"title": diet.name["title"], "process": diet.recipe}]
-                diet.ingredient = [{"title": diet.name["title"], "datas": diet.ingredient}]
-
-            diet.name = [diet.name]  # string
+                diet.ingredient = [{"title": diet.name["title"], "data": diet.ingredient}]
 
             if diet.tip != '':
                 diet.tip = ast.literal_eval(diet.tip)  # list
@@ -123,15 +121,15 @@ class DietDataDetailView(APIView):
                     diet.total_calorie += side_menu.total_calorie
 
                     # ingredient가 비어있으면 title만 보내고, 아니라면 재료도 같이 보내기
-                    if len(side_menu.ingredient) == 0:
-                        diet.ingredient.append({"title": side_menu.name["title"]})
-
+                    if len(side_menu.ingredient) != 0:
+                        diet.ingredient.append({"title": side_menu.name["title"], "data": side_menu.ingredient})
+                        diet.menu = self.get_menu(diet.ingredient)
                     else:
-                        diet.ingredient.append({"title": side_menu.name["title"], "datas": side_menu.ingredient})
+                        diet.ingredient.append({"title": side_menu.name["title"]})
+                        diet.menu = self.get_menu(diet.ingredient)
 
-            diet.menu = self.get_menu(diet.ingredient)
             serializer = DietDataSerializer(diet, context={"request": request})
             return JsonResponse(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
