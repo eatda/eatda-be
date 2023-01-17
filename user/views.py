@@ -76,14 +76,19 @@ class UserCharacterView(APIView):
                 selected_character.append(users['character'])
             selected_character.sort()
 
+            # 전체 등록된 캐릭터 리스트 가져오기
+            all_character_list = [character[0] for character in Info.character.field.choices]
+
             # 선택된 캐릭터 제외하기
-            all_character_list = Character.objects.all()
-
             for select in selected_character:
-                all_character_list = all_character_list.exclude(id=select)
+                all_character_list.remove(select)
 
-            serializer = CharacterSerializer(all_character_list, many=True, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            res_data = []
+
+            for character_id in all_character_list:
+                res_data.append({'id': character_id})
+
+            return Response(res_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
