@@ -33,17 +33,25 @@ class Info(BaseModel):
         DEEPHIGH = 4  # 매우 적극적인 활동 및 운동
 
     class GenderType(models.TextChoices):  # 성별
+        NOCHOICES = ''
         FEMALE = 'f'
         MALE = 'm'
 
+    class CharacterType(models.IntegerChoices):  # 캐릭터
+        MOM = 0  # 엄마
+        DAD = 1  # 아빠
+        BROTHER1 = 2  # 형제1
+        BROTHER2 = 3  # 형제2
+        BROTHER3 = 4  # 형제3
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)  # 로그인테이블 ID
     name = models.CharField(max_length=20)  # 이름
-    character = models.ForeignKey(Character, on_delete=models.SET_NULL, null=True)  # 캐릭터 ID
+    character = models.IntegerField(choices=CharacterType.choices)  # 캐릭터
     height = models.FloatField(default=None, null=True)  # 키
     weight = models.FloatField(default=None, null=True)  # 몸무게
-    gender = models.CharField(max_length=1, choices=GenderType.choices)  # 성별
+    gender = models.CharField(max_length=1, choices=GenderType.choices, default=GenderType.NOCHOICES, null=True)  # 성별
     is_diabetes = models.BooleanField(default=False)  # 당뇨환자여부
-    activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices)  # 활동수준
+    activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices, null=True)  # 활동수준
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)  # 그룹코드 ID
 
 
@@ -56,7 +64,7 @@ class BloodSugarLevel(BaseModel):
 
     user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
     diet = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 id
-    time = models.DateTimeField(default=None, null=True)  # 혈당측정시간
+    time = models.CharField(max_length=8, default=None, null=True)  # 혈당측정시간
     level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(300)], default=None,
                                 null=True)  # 혈당량
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
