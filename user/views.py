@@ -291,17 +291,13 @@ class OurPickView(APIView):
         user = get_object_or_404(Info, user_id=user_id)
 
         try:
-            ourpick = OurPick.objects.get(user_id = user_id, diet_id = request.data['diet_id'])
-
-            # ourpick 삭제 전 데이터 유효성 검사
             request.data["user_id"] = user.user_id
-            serializer = OurPickSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
 
             # 식단 존재 확인
             get_object_or_404(Data, id=request.data["diet_id"])
 
             # ourpick model에서 선택 삭제
+            ourpick = OurPick.objects.get(user_id = request.data['user_id'], diet_id=request.data['diet_id'])
             ourpick.delete()
 
         except Exception as e:
