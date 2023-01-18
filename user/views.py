@@ -9,11 +9,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from account.views import AuthView
+from diet.models import Data
 from diet.serializers import DietSimpleSerializer
 from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like
 from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, \
-    BloodSerializer
-
+    BloodSerializer, DietSerializer
 
 from datetime import datetime
 
@@ -213,7 +213,8 @@ class UserHomeView(APIView):
                     serializer = BloodSerializer(blood_detail)
                     blood_sugar_level[timeline]["data"] = serializer.data
                     try:
-                        blood_sugar_level[timeline]["is_me_liked"] = True if blood_like.get(user_id=user.user_id) else False
+                        blood_sugar_level[timeline]["is_me_liked"] = True if blood_like.get(
+                            user_id=user.user_id) else False
                     except:
                         blood_sugar_level[timeline]["is_me_liked"] = False
                     blood_sugar_level[timeline]["who_liked"] = self.get_like_character(blood_like)
@@ -226,3 +227,34 @@ class UserHomeView(APIView):
         }
         return Response(res_data, status=status.HTTP_200_OK)
 
+
+# 오늘의 식단 등록 api
+class UserDietView(APIView):
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 오늘의 식단 등록 전 데이터 유효성 검사
+        request.data["user_id"] = user.user_id
+        serializer = DietSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 식단 존재 확인
+        get_object_or_404(Data, id=request.data["diet_id"])
+
+        # 현재 날짜 가져오기
+        date = datetime.now().date()
+
+        # 이미 등록한 시간대인지 확인
+        timeline = request.data["timeline"]
+        if BloodSugarLevel.objects.filter(user_id__group=user.group_id,
+                                          created_at__contains=date, timeline=timeline).exists():
+            return Response({"error": "이미 해당 시간대에 등록된 식단이 있습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer.save()
+        return Response(status=status.HTTP_201_CREATED)

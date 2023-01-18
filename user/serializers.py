@@ -142,7 +142,9 @@ class BloodSerializer(serializers.ModelSerializer):
 
 # 오늘의 식단 정보
 class DietSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+    diet_id = serializers.IntegerField(required=True)
+
     class Meta:
         model = BloodSugarLevel
-        fields = ['user_id', 'diet_id']
-
+        fields = ['user_id', 'diet_id', 'timeline']
