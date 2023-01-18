@@ -9,11 +9,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from account.views import AuthView
+from diet.models import Data
 from diet.serializers import DietSimpleSerializer
 from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like
 from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, \
-    BloodSerializer
-
+    BloodSerializer, DietSerializer, OurPickSerializer
 
 from datetime import datetime
 
@@ -226,3 +226,24 @@ class UserHomeView(APIView):
         }
         return Response(res_data, status=status.HTTP_200_OK)
 
+
+class OurPickView(APIView):
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 오늘의 식단 등록 전 데이터 유효성 검사
+        request.data["user_id"] = user.user_id
+        serializer = OurPickSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 식단 존재 확인
+        get_object_or_404(Data, id=request.data["diet_id"])
+
+        serializer.save(serializer.data)
+        return Response(status=status.HTTP_201_CREATED)
