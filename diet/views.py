@@ -9,7 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from diet.models import DietAllergy, Filter, FilterCategory, Data, MainSide
-from diet.serializers import DietAllergySerializer, FilterSerializer, FilterCategorySerializer, DietDataSerializer
+from diet.serializers import DietAllergySerializer, FilterSerializer, FilterCategorySerializer, DietDataSerializer, \
+    DietSimpleSerializer
 
 
 # 알러지 리스트 불러오는 api
@@ -86,7 +87,7 @@ class DietDataDetailView(APIView):
         try:
             # 주 식단 얻기
             diet = self.get_object(id)
-            menu_list = [] #식단 메뉴들 리스트
+            menu_list = []  # 식단 메뉴들 리스트
             menu_list = self.get_menu(menu_list, diet.name)
 
             if diet.recipe != '':
@@ -130,3 +131,15 @@ class DietDataDetailView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# 식단 전체 리스트 가져오는 API
+class DietDataView(APIView):
+    def get(self, request):
+        try:  # 식단 전체 리스트
+            all_diet_list = Data.objects.all()
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = DietSimpleSerializer(all_diet_list, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
