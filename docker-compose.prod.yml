@@ -24,6 +24,8 @@ services:
   nginx:
     container_name: nginx
     build: ./config/nginx
+    environment:
+      TZ: "Asia/Seoul"
     volumes:
       - static:/home/app/web/static
       - media:/home/app/web/media

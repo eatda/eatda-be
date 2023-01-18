@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from user.models import Info, UserAllergy, Character, Group
+from user.models import Info, UserAllergy, Character, Group, BloodSugarLevel, OurPick
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -122,3 +122,51 @@ class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'code']
+
+
+# 식후 혈당량 & 식단 정보
+class BloodDietSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BloodSugarLevel
+        fields = ['user_id', 'diet_id', 'time', 'level', 'timeline']
+
+
+# 식후 혈당량 정보
+class BloodSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(write_only=True)
+
+    class Meta:
+        model = BloodSugarLevel
+        fields = ['user_id', 'time', 'level', 'timeline']
+
+
+# 오늘의 식단 정보
+class DietSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+    diet_id = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = BloodSugarLevel
+        fields = ['user_id', 'diet_id', 'timeline']
+
+
+# 유저의 OurPick
+class OurPickSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+    diet_id = serializers.IntegerField(required=True)
+
+    def save(self, validated_data):
+        user_id = validated_data.get('user_id')
+        diet_id = validated_data.get('diet_id')
+
+        ourpick = OurPick(
+            user_id = user_id,
+            diet_id = diet_id
+        )
+
+        ourpick.save()
+        return ourpick
+
+    class Meta:
+        model = OurPick
+        fields = ['user_id', 'diet_id']

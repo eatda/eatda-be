@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install psycopg2 dependencies
-RUN apk update && apk add python3 python3-dev mariadb-dev build-base && pip3 install mysqlclient && apk add tzdata
+RUN apk update && apk add python3 python3-dev mariadb-dev build-base && pip3 install mysqlclient
 
 # install dependencies
 COPY ./requirements.txt .
@@ -53,6 +53,7 @@ RUN python -m pip install --upgrade pip
 RUN pip install mysqlclient
 RUN pip install --no-cache /wheels/*
 RUN apk del build-deps
+RUN apk add tzdata
 
 # copy entrypoint-prod.sh
 COPY ./config/docker/entrypoint.prod.sh $APP_HOME
