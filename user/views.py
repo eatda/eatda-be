@@ -278,6 +278,9 @@ class OurPickView(APIView):
         # 식단 존재 확인
         get_object_or_404(Data, id=request.data["diet_id"])
 
+        if OurPick.objects.filter(user_id=user.user_id, diet_id=request.data['diet_id']).exists():
+            return Response({"error": "이미 좋아요한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
+
         serializer.save(serializer.data)
         return Response(status=status.HTTP_201_CREATED)
 
@@ -291,13 +294,11 @@ class OurPickView(APIView):
         user = get_object_or_404(Info, user_id=user_id)
 
         try:
-            request.data["user_id"] = user.user_id
-
             # 식단 존재 확인
             get_object_or_404(Data, id=request.data["diet_id"])
 
             # ourpick model에서 선택 삭제
-            ourpick = OurPick.objects.get(user_id = request.data['user_id'], diet_id=request.data['diet_id'])
+            ourpick = OurPick.objects.get(user_id = user_id, diet_id=request.data['diet_id'])
             ourpick.delete()
 
         except Exception as e:
