@@ -59,3 +59,18 @@ class DietDataSerializer(serializers.ModelSerializer):
         model = Data
         fields = ['id', 'name', 'image', 'menu', 'carbohydrate', 'protein', 'province', 'salt', 'total_calorie', 'ingredient',
                   'recipe', 'tip', 'user_id', 'type_id', 'flavor_id', 'carbohydrate_type_id']
+
+
+# 식단 정보 간략하게
+class DietSimpleSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField(read_only=True)
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
+
+    class Meta:
+        model = Data
+        fields = ['id', 'name', 'image']
