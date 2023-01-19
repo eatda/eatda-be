@@ -4,6 +4,7 @@ import codecs
 import uuid
 from collections import Counter
 
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import status, exceptions
 from rest_framework.response import Response
@@ -16,7 +17,7 @@ from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Li
 from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, \
     BloodSerializer, DietSerializer, OurPickSerializer, BloodDietSerializer
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class UserInfoDetailView(APIView):
@@ -496,3 +497,46 @@ class BloodSugarLevelView(APIView):
 
         serializer.save(validated_data=request.data)
         return Response(status=status.HTTP_201_CREATED)
+
+
+# 주간 혈당 리포트 api
+class BloodLevelReportView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 현재 날짜 가져오기
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=6)
+
+        # 일주일간 그룹의 식후 혈당량 정보 가져오기
+        try:
+            all_blood_data = BloodSugarLevel.objects.filter(user_id__group=user.group_id)
+            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date])
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 일주일간 데이터가 총 데이터 수와 같다면 (아직 서비스 가입 후 일주일이 지나지 않음)
+        if all_blood_data.count() == blood_data.count():
+            start_date = blood_data[blood_data.count() - 1].created_at.date()
+
+        # 요일별 평균 내기
+        days = []
+        for i in range(0, 7):
+            days.append(end_date - timedelta(days=i))
+        result = BloodSugarLevel.objects.filter(created_at__date__in=days).values_list('created_at__date').\
+            annotate(Avg('level')).filter(user_id__group=user.group_id).order_by('-created_at__date')
+
+        print(result)
+
+        serializer = BloodDietSerializer(blood_data, many=True, context={"request":request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+

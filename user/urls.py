@@ -2,7 +2,7 @@ from django.conf.urls.static import static
 from django.urls import path
 
 from eatda_be import settings
-from user.views import UserCharacterView, UserGroupView, UserInfoDetailView, UserHomeView, UserDietView, OurPickView, BloodSugarLevelView
+from user.views import UserCharacterView, UserGroupView, UserInfoDetailView, UserHomeView, UserDietView, OurPickView, BloodSugarLevelView, BloodLevelReportView
 
 
 urlpatterns = [
@@ -12,5 +12,6 @@ urlpatterns = [
     path('home/', UserHomeView.as_view()),  # 홈
     path('diet/', UserDietView.as_view()),  # 유저 식단
     path('diet/like/', OurPickView.as_view()),  # OurPick
-    path('blood-sugar-level/', BloodSugarLevelView.as_view())  # 식후 혈당량
+    path('blood-sugar-level/', BloodSugarLevelView.as_view()),  # 식후 혈당량
+    path('blood-sugar-level/report/', BloodLevelReportView.as_view())  # 주간 혈당 리포트
 ]
