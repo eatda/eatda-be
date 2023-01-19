@@ -133,11 +133,24 @@ class BloodDietSerializer(serializers.ModelSerializer):
 
 # 식후 혈당량 정보
 class BloodSerializer(serializers.ModelSerializer):
-    user_id = serializers.UUIDField(write_only=True)
+    id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = BloodSugarLevel
-        fields = ['user_id', 'time', 'level', 'timeline']
+        fields = ['id', 'time', 'level', 'timeline']
+        read_only_fields = ('timeline',)
+        extra_kwargs = {
+            'time': {'required': True},
+            'level': {'required': True}
+        }
+
+    def save(self, validated_data):
+        id = validated_data.get("id")
+        data = BloodSugarLevel.objects.get(id=id)
+        data.level = validated_data.get("level")
+        data.time = validated_data.get("time")
+        data.save()
+        return data
 
 
 # 오늘의 식단 정보
@@ -160,8 +173,8 @@ class OurPickSerializer(serializers.ModelSerializer):
         diet_id = validated_data.get('diet_id')
 
         ourpick = OurPick(
-            user_id = user_id,
-            diet_id = diet_id
+            user_id=user_id,
+            diet_id=diet_id
         )
 
         ourpick.save()

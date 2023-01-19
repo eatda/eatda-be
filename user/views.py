@@ -12,7 +12,7 @@ from account.views import AuthView
 from diet.models import Data
 from diet.serializers import DietSimpleSerializer
 from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like, OurPick
-from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, BloodSerializer, DietSerializer, OurPickSerializer
+from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, BloodSerializer, DietSerializer, OurPickSerializer, BloodDietSerializer
 
 from datetime import datetime
 
@@ -305,3 +305,37 @@ class OurPickView(APIView):
             return Response({'error':str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# 식후 혈당량 api
+class BloodSugarLevelView(APIView):
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 당뇨인이 아니라면 등록 거부
+        if user.is_diabetes is False:
+            return Response({"error": "당뇨인 본인만 혈당을 입력할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+        # request body 데이터 유효성 검사
+        serializer = BloodSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 그룹 내 오늘의 식단 정보 맞는지 검사
+        try:
+            diet_data = BloodSugarLevel.objects.get(id=request.data["id"])
+        except:
+            return Response({"error": "존재하지 않는 식단입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 식후 혈당량 이미 있는지 검사
+        if diet_data.level is not None:
+            return Response({"error": "식후 혈당량 값이 이미 존재합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(validated_data=request.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
