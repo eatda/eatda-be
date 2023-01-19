@@ -309,6 +309,37 @@ class OurPickView(APIView):
 
 # 식후 혈당량 api
 class BloodSugarLevelView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 같은 그룹 내의 식후 혈당량 가져오기
+        try:
+            blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id).order_by('-created_at')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
+
+        # 날짜별로 데이터 묶기
+        res_data = []
+        prev_date = ''  # 현재 탐색 날짜
+        data = []  # 식후 혈당량 리스트
+        for blood in serializer.data:
+            if blood["date"] == prev_date:
+                data.insert(0, blood)
+            else:
+                if prev_date is not '':
+                    res_data.append({"date": prev_date, "data": data})
+                data = [blood]
+                prev_date = blood["date"]
+        res_data.append({"date": prev_date, "data": data})  # 마지막 날짜 데이터
+        return Response(res_data, status=status.HTTP_200_OK)
+
     def post(self, request):
         # 인가확인
         if AuthView.get(self, request).status_code is not status.HTTP_200_OK:

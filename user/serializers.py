@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from user.models import Info, UserAllergy, Character, Group, BloodSugarLevel, OurPick
+from diet.serializers import DietSimpleSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -126,9 +127,21 @@ class GroupSerializer(serializers.ModelSerializer):
 
 # 식후 혈당량 & 식단 정보
 class BloodDietSerializer(serializers.ModelSerializer):
+    diet = serializers.SerializerMethodField(read_only=True)
+    date = serializers.SerializerMethodField(read_only=True)
+
+    def get_diet(self, obj):
+        diet_serializer = DietSimpleSerializer(obj.diet, context=self.context)
+        return diet_serializer.data
+
+    def get_date(self, obj):
+        return str(obj.created_at)[2:10].replace('-', '.')
+
     class Meta:
         model = BloodSugarLevel
-        fields = ['user_id', 'diet_id', 'time', 'level', 'timeline']
+        depth = 1
+        fields = ['id', 'diet', 'date', 'time', 'level', 'timeline']
+        read_only_fields = ('id',)
 
 
 # 식후 혈당량 정보
