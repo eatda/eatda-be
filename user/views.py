@@ -417,7 +417,7 @@ class OurPickView(APIView):
                     }
 
                     diet_list.append(diet_data)
-                is_exist = True if len(diet_list) != 0 else False
+            is_exist = True if len(diet_list) != 0 else False
 
             res_data = {
                 'user_name': gUser.name,
