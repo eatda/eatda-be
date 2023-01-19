@@ -322,24 +322,20 @@ class BloodSugarLevelView(APIView):
         if user.is_diabetes is False:
             return Response({"error": "당뇨인 본인만 혈당을 입력할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN)
 
+        # request body 데이터 유효성 검사
+        serializer = BloodSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         # 그룹 내 오늘의 식단 정보 맞는지 검사
         try:
-            user_diet = BloodSugarLevel.objects.get(id=request.data["user_diet"])
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            diet_data = BloodSugarLevel.objects.get(id=request.data["id"])
+        except:
+            return Response({"error": "존재하지 않는 식단입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            if user_diet.user.group_id != user.group_id:  # 다른 그룹
-                return Response({"error": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        # 식후 혈당량 값 이미 있는지 검사
-        if user_diet.level is not None:
+        # 식후 혈당량 이미 있는지 검사
+        if diet_data.level is not None:
             return Response({"error": "식후 혈당량 값이 이미 존재합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_diet.level = request.data["level"]
-        user_diet.time = request.data["time"]
-        user_diet.save()
-        return Response(status=status.HTTP_201_CREATED)
+        serializer.save(validated_data=request.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
