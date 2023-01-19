@@ -323,9 +323,22 @@ class BloodSugarLevelView(APIView):
             blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id).order_by('-created_at')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # 날짜별로 데이터 묶기
+        res_data = []
+        prev_date = ''  # 현재 탐색 날짜
+        data = []  # 식후 혈당량 리스트
+        for blood in serializer.data:
+            if blood["date"] == prev_date:
+                data.insert(0, blood)
+            else:
+                if prev_date is not '':
+                    res_data.append({"date": prev_date, "data": data})
+                data = [blood]
+                prev_date = blood["date"]
+        res_data.append({"date": prev_date, "data": data})  # 마지막 날짜 데이터
+        return Response(res_data, status=status.HTTP_200_OK)
 
     def post(self, request):
         # 인가확인
