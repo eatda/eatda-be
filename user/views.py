@@ -229,6 +229,23 @@ class UserHomeView(APIView):
 
 # 오늘의 식단 등록 api
 class UserDietView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 같은 그룹 내의 식후 혈당량 없는 오늘의 식단 가져오기
+        try:
+            diet_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level=None).order_by('created_at')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = DietSerializer(diet_list, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
         # 인가확인
         if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
@@ -320,7 +337,7 @@ class BloodSugarLevelView(APIView):
 
         # 같은 그룹 내의 식후 혈당량 가져오기
         try:
-            blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id).order_by('-created_at')
+            blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False).order_by('-created_at')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
@@ -368,5 +385,5 @@ class BloodSugarLevelView(APIView):
             return Response({"error": "식후 혈당량 값이 이미 존재합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save(validated_data=request.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
