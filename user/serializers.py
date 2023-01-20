@@ -19,10 +19,14 @@ class InfoAuthSerializer(serializers.ModelSerializer):
 class InfoBasicSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     group = serializers.CharField(required=True)
+    group_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_group_code(self, obj):
+        return obj.group.code
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group']
+        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group', 'group_code']
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -50,11 +54,15 @@ class InfoBasicSerializer(serializers.ModelSerializer):
 class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
     group = serializers.CharField(required=True)
+    group_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_group_code(self, obj):
+        return obj.group.code
 
     class Meta:
         model = Info
         fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'age', 'is_diabetes',
-                  'activity', 'group']
+                  'activity', 'group', 'group_code']
         extra_kwargs = {
             'height': {'required': True},
             'weight': {'required': True},
