@@ -261,6 +261,33 @@ class HomeLikeView(APIView):
         serializer.save(serializer.data)
         return Response(status=status.HTTP_201_CREATED)
 
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            react = request.data["react"]
+            target = request.data["target"]
+            timeline = request.data["timeline"]
+
+            # 반응 존재 확인
+            if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists() is False:
+                return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 좋아요 필드에서 선택 삭제
+            like = Like.objects.get(user_id__user=user_id, react=react, target=target, timeline=timeline)
+            like.delete()
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 # 오늘의 식단 등록 api
 class UserDietView(APIView):
