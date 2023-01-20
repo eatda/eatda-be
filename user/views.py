@@ -50,7 +50,7 @@ class UserInfoDetailView(APIView):
                         'height': info_serializer.data['height'],
                         'weight': info_serializer.data['weight'],
                         'gender': info_serializer.data['gender'],
-                        'age' : info_serializer.data['age'],
+                        'age': info_serializer.data['age'],
                         'is_diabetes': info_serializer.data['is_diabetes'],
                         'group': info_serializer.data['group_code'],
                         'allergy': allergy_filter
@@ -569,3 +569,50 @@ class BloodSugarLevelView(APIView):
 
         serializer.save(validated_data=request.data)
         return Response(status=status.HTTP_201_CREATED)
+
+
+# best & worst top 3 식단 api
+class DietRankView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        best, worst = [], []
+
+        # 해당 유저의 식후 혈당량 가져오기
+        try:
+            high_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+                '-level')
+            low_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+                'level')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        high_blood_serializer = BloodDietSerializer(high_blood_list, many=True, context={"request": request})
+        low_blood_serializer = BloodDietSerializer(low_blood_list, many=True, context={'request': request})
+
+        # best top 3
+        for i in range(0, 3):
+            try:
+                best.append(low_blood_serializer.data[i]['diet'])
+            except:
+                break
+
+        # worst top 3
+        for i in range(0, 3):
+            try:
+                worst.append(high_blood_serializer.data[i]['diet'])
+            except:
+                break
+
+        res_data = {
+            'best': best,
+            'worst': worst
+        }
+
+        return Response(res_data, status=status.HTTP_200_OK)
