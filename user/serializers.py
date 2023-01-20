@@ -18,11 +18,15 @@ class InfoAuthSerializer(serializers.ModelSerializer):
 # 기본 유저 정보 (비당뇨인 전체 정보)
 class InfoBasicSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    group_id = serializers.IntegerField(required=True)
+    group = serializers.CharField(required=True)
+    group_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_group_code(self, obj):
+        return obj.group.code
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group_id']
+        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group', 'group_code']
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -31,7 +35,8 @@ class InfoBasicSerializer(serializers.ModelSerializer):
         name = validated_data.get('name')
         character = validated_data.get('character')
         is_diabetes = validated_data.get('is_diabetes')
-        group_id = validated_data.get('group_id')
+        group = validated_data.get('group')
+        group_id = Group.objects.get(code=group).id
 
         info = Info(
             user_id=user_id,
@@ -48,19 +53,36 @@ class InfoBasicSerializer(serializers.ModelSerializer):
 # 유저 전체 정보 (당뇨인)
 class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    height = serializers.FloatField(required=True)
-    weight = serializers.FloatField(required=True)
-    group_id = serializers.IntegerField(required=True)
+    group = serializers.CharField(required=True)
+    group_code = serializers.SerializerMethodField(read_only=True)
+
+    def get_group_code(self, obj):
+        return obj.group.code
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'is_diabetes',
-                  'activity', 'group_id']
+        fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'age', 'is_diabetes',
+                  'activity', 'group', 'group_code', 'bmr', 'amr']
+        extra_kwargs = {
+            'height': {'required': True},
+            'weight': {'required': True},
+            'gender': {'required': True},
+            'activity': {'required': True},
+            'age': {'required': True}
+        }
 
-    def validate(self, data):
-        if data.get("gender") is None or data.get("activity") is None:
-            raise serializers.ValidationError("You have to fill all information")
-        return data
+    # 기초 대사량 계산
+    def cal_bmr(self, g, w, h, a):
+        result = (9.99 * w) + (6.25 * h) - (4.95 * a)
+        if g == 'f':  # 여성
+            return result - 161.0
+        else:  # 남성
+            return result + 5.0
+
+    # 활동 대사량 계산
+    def cal_amr(self, bmr, act):
+        multipliers = [1.2, 1.375, 1.55, 1.725, 1.9]
+        return bmr * multipliers[act]
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -71,9 +93,12 @@ class InfoSerializer(serializers.ModelSerializer):
         height = validated_data.get('height')
         weight = validated_data.get('weight')
         gender = validated_data.get('gender')
+        age = validated_data.get('age')
         is_diabetes = validated_data.get('is_diabetes')
         activity = validated_data.get('activity')
-        group_id = validated_data.get('group_id')
+        group = validated_data.get('group')
+        group_id = Group.objects.get(code=group).id
+        bmr = self.cal_bmr(gender, weight, height, age)
 
         info = Info(
             user_id=user_id,
@@ -82,9 +107,12 @@ class InfoSerializer(serializers.ModelSerializer):
             height=height,
             weight=weight,
             gender=gender,
+            age=age,
             is_diabetes=is_diabetes,
             activity=activity,
-            group_id=group_id
+            group_id=group_id,
+            bmr=bmr,
+            amr=self.cal_amr(bmr, activity)
         )
         # 유저 정보 저장
         info.save()

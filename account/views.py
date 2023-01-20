@@ -26,9 +26,9 @@ class RegisterView(APIView):
         # 유저 정보 (당뇨인 / 비당뇨인) 저장
         try: 
             if request.data["is_diabetes"]:  # 당뇨인
-                info_serializer = InfoSerializer(data=request.data, context={"request": request})
+                info_serializer = InfoSerializer(data=request.data)
             else:  # 비당뇨인
-                info_serializer = InfoBasicSerializer(data=request.data, context={"request": request})
+                info_serializer = InfoBasicSerializer(data=request.data)
         except:
             user.delete()
             return Response({"error": "당뇨인 여부 정보를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)

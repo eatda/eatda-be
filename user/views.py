@@ -19,6 +19,7 @@ from user.serializers import CharacterSerializer, GroupSerializer, InfoSerialize
 from datetime import datetime
 
 
+# 유저 정보 가져오는 api
 class UserInfoDetailView(APIView):
     def get(self, request):
         # 인가확인
@@ -49,8 +50,9 @@ class UserInfoDetailView(APIView):
                         'height': info_serializer.data['height'],
                         'weight': info_serializer.data['weight'],
                         'gender': info_serializer.data['gender'],
+                        'age' : info_serializer.data['age'],
                         'is_diabetes': info_serializer.data['is_diabetes'],
-                        'group_id': info_serializer.data['group_id'],
+                        'group': info_serializer.data['group_code'],
                         'allergy': allergy_filter
                     }
 
