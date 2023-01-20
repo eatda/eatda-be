@@ -72,7 +72,7 @@ class UserInfoDetailView(APIView):
             raise exceptions.ValidationError(detail='Please login again')
 
 
-# 유저 캐릭터 리스트 가져오느 api
+# 유저 캐릭터 리스트 가져오는 api
 class UserCharacterView(APIView):
     def get(self, request):
         try:
@@ -261,9 +261,11 @@ class HomeLikeView(APIView):
         })
 
         serializer.is_valid(raise_exception=True)
+        date = datetime.now().date()
 
         # 이미 좋아요한 유저, 반응, 타겟 및 시간대인지 확인
-        if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists():
+        if Like.objects.filter(user_id__user=user_id, react=react, target=target,
+                               timeline=timeline, created_at__date=date).exists():
             return Response({"error": "이미 해당 시간대에 반응을 표시한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
 
         print(serializer.data)
@@ -287,14 +289,16 @@ class HomeLikeView(APIView):
 
             target = request.data["target"]
             timeline = request.data["timeline"]
+            date = datetime.now().date()
 
             # 반응 존재 확인
             if Like.objects.filter(user_id__user=user_id, react=react, target=target,
-                                   timeline=timeline).exists() is False:
+                                   timeline=timeline, created_at__date=date).exists() is False:
                 return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
 
             # 좋아요 필드에서 선택 삭제
-            like = Like.objects.get(user_id__user=user_id, react=react, target=target, timeline=timeline)
+            like = Like.objects.get(user_id__user=user_id, react=react, target=target,
+                                    timeline=timeline, created_at__date=date)
             like.delete()
 
         except Exception as e:
