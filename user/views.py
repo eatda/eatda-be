@@ -2,6 +2,7 @@
 import base64
 import codecs
 import uuid
+from collections import Counter
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status, exceptions
@@ -11,12 +12,14 @@ from rest_framework.views import APIView
 from account.views import AuthView
 from diet.models import Data
 from diet.serializers import DietSimpleSerializer
-from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like
-from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, BloodSerializer, DietSerializer, OurPickSerializer
+from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like, OurPick
+from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, \
+    BloodSerializer, DietSerializer, OurPickSerializer, BloodDietSerializer, HomeLikeSerializer
 
 from datetime import datetime
 
 
+# 유저 정보 가져오는 api
 class UserInfoDetailView(APIView):
     def get(self, request):
         # 인가확인
@@ -47,8 +50,9 @@ class UserInfoDetailView(APIView):
                         'height': info_serializer.data['height'],
                         'weight': info_serializer.data['weight'],
                         'gender': info_serializer.data['gender'],
+                        'age' : info_serializer.data['age'],
                         'is_diabetes': info_serializer.data['is_diabetes'],
-                        'group_id': info_serializer.data['group_id'],
+                        'group': info_serializer.data['group_code'],
                         'allergy': allergy_filter
                     }
 
@@ -72,8 +76,10 @@ class UserCharacterView(APIView):
     def get(self, request):
         try:
             # 그룹 내 유저들의 캐릭터 ID 받아오기
-            group_id = request.GET.get('groupid')
-            group_list = Info.objects.filter(group=group_id).values()  # 해당하는 그룹id의 유저들 get
+            group = request.GET.get('group')
+            if Group.objects.filter(code=group).exists() is False:
+                return Response({"error": "올바른 그룹 코드를 적어주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            group_list = Info.objects.filter(group__code=group).values()  # 해당하는 그룹 code의 유저들 get
             selected_character = list()
 
             for users in group_list:
@@ -227,8 +233,94 @@ class UserHomeView(APIView):
         return Response(res_data, status=status.HTTP_200_OK)
 
 
+# 홈화면에서 좋아요 눌렀을 때 api
+class HomeLikeView(APIView):
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            react = request.data["react"]
+        except:
+            react = Like.ReactionType.HEART
+
+        target = request.data["target"]
+        timeline = request.data["timeline"]
+
+        serializer = HomeLikeSerializer(data={
+            "user_id": user_id,
+            "react": react,
+            "target": target,
+            "timeline": timeline
+        })
+
+        serializer.is_valid(raise_exception=True)
+
+        # 이미 좋아요한 유저, 반응, 타겟 및 시간대인지 확인
+        if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists():
+            return Response({"error": "이미 해당 시간대에 반응을 표시한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
+
+        print(serializer.data)
+        serializer.save(serializer.data)
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            try:
+                react = request.data["react"]
+            except:
+                react = Like.ReactionType.HEART
+
+            target = request.data["target"]
+            timeline = request.data["timeline"]
+
+            # 반응 존재 확인
+            if Like.objects.filter(user_id__user=user_id, react=react, target=target,
+                                   timeline=timeline).exists() is False:
+                return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 좋아요 필드에서 선택 삭제
+            like = Like.objects.get(user_id__user=user_id, react=react, target=target, timeline=timeline)
+            like.delete()
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 # 오늘의 식단 등록 api
 class UserDietView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 같은 그룹 내의 식후 혈당량 없는 오늘의 식단 가져오기
+        try:
+            diet_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level=None).order_by('created_at')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = DietSerializer(diet_list, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
         # 인가확인
         if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
@@ -259,8 +351,14 @@ class UserDietView(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
-# 유저가 선택한 Our-Pick api
+# 유저가 선택한 Our-Pick 관련 api
 class OurPickView(APIView):
+    def get_like_character(self, like_list):
+        who_liked = []
+        for like in like_list:
+            who_liked.append(like.character)
+        return who_liked
+
     def post(self, request):
         # 인가확인
         if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
@@ -270,7 +368,7 @@ class OurPickView(APIView):
         user_id = AuthView.get(self, request).data['user_id']
         user = get_object_or_404(Info, user_id=user_id)
 
-        # 오늘의 식단 등록 전 데이터 유효성 검사
+        # ourpick 저장 전 데이터 유효성 검사
         request.data["user_id"] = user.user_id
         serializer = OurPickSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -278,5 +376,196 @@ class OurPickView(APIView):
         # 식단 존재 확인
         get_object_or_404(Data, id=request.data["diet_id"])
 
+        if OurPick.objects.filter(user_id=user.user_id, diet_id=request.data['diet_id']).exists():
+            return Response({"error": "이미 좋아요한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
+
         serializer.save(serializer.data)
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            # 식단 존재 확인
+            get_object_or_404(Data, id=request.data["diet_id"])
+
+            # ourpick model에서 선택 삭제
+            ourpick = OurPick.objects.get(user_id=user_id, diet_id=request.data['diet_id'])
+            ourpick.delete()
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get(self, request):
+
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # ourpick 리스트 가져오기 (해당 그룹에 대한)
+        try:
+            ourpick_list = OurPick.objects.filter(user_id__group=user.group_id)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 같은 그룹이 2명 이상 좋아요한 리스트 및 각자들이 좋아한 리스트 불러오기
+        popular_diet_id_list = []  # 그룹이 좋아요한 diet_id 리스트
+        for pick in ourpick_list:
+            popular_serializer = OurPickSerializer(pick)
+            popular_diet_id_list.append(popular_serializer.data['diet_id'])
+        popular_cnt_list = dict(Counter(popular_diet_id_list))
+        print(popular_cnt_list)
+        total_popular = []  # 최종적으로 2개 이상 선택된 diet_id 리스트
+
+        # 내림차순 순으로 2개 이상 선택된 diet_list 저장하기
+        for key in sorted(popular_cnt_list.keys(), reverse=True):
+            if popular_cnt_list[key] >= 2:
+                total_popular.append(key)
+
+        popular_pick = []  # 가족들의 인기 픽 리스트
+        for diet_id in total_popular:
+            # 식단 존재 확인
+            get_object_or_404(Data, id=diet_id)
+
+            diet_detail = Data.objects.get(id=diet_id)
+            diet_simple = DietSimpleSerializer(diet_detail, context={'request': request})
+
+            try:
+                is_me_liked = True if ourpick_list.get(user_id=user_id, diet_id=diet_id) else False
+            except:
+                is_me_liked = False
+
+            popular_user = ourpick_list.filter(diet_id=diet_id)
+
+            liked_user = []
+            for pUser in popular_user:
+                liked_user.append(pUser.user)
+
+            who_liked = self.get_like_character(liked_user)
+            who_liked.sort()
+
+            popular_data = {
+                'diet': diet_simple.data,
+                'is_me_liked': is_me_liked,
+                'who_liked': who_liked
+            }
+
+            popular_pick.append(popular_data)
+
+        # 각자 좋아요한 리스트
+        # 그룹에서 속해있는 유저들 가져오기
+        indivisual_list = []  # 같은 그룹에서 각자 좋아하는거 저장하는 리스트
+        group_users = Info.objects.filter(group=user.group_id)
+
+        for gUser in group_users:
+            diet_list = []  # 각자마다 식단을 저장하는 배열
+            for pick in ourpick_list:
+                if pick.user_id == gUser.user.id:
+                    print(user_id)
+                    diet_detail = Data.objects.get(id=pick.diet_id)
+                    diet_simple = DietSimpleSerializer(diet_detail, context={'request': request})
+
+                    try:
+                        is_me_liked = True if ourpick_list.get(user_id=user_id,
+                                                               diet_id=pick.diet_id) else False  # 만약 내가 좋아한 식단이면 True
+                    except:
+                        is_me_liked = False  # 아니면 False
+                    print(is_me_liked)
+
+                    diet_data = {
+                        'diet': diet_simple.data,
+                        'is_me_liked': is_me_liked
+                    }
+
+                    diet_list.append(diet_data)
+            is_exist = True if len(diet_list) != 0 else False
+
+            res_data = {
+                'user_name': gUser.name,
+                'is_exist': is_exist,
+                'data': diet_list
+            }
+            indivisual_list.append(res_data)
+
+        res_data = {
+            'popular_pick': popular_pick,
+            'indivisual_list': indivisual_list
+        }
+        return Response(res_data, status=status.HTTP_200_OK)
+
+
+# 식후 혈당량 api
+class BloodSugarLevelView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 같은 그룹 내의 식후 혈당량 가져오기
+        try:
+            blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False).order_by(
+                '-created_at')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
+
+        # 날짜별로 데이터 묶기
+        res_data = []
+        prev_date = ''  # 현재 탐색 날짜
+        data = []  # 식후 혈당량 리스트
+        for blood in serializer.data:
+            if blood["date"] == prev_date:
+                data.insert(0, blood)
+            else:
+                if prev_date is not '':
+                    res_data.append({"date": prev_date, "data": data})
+                data = [blood]
+                prev_date = blood["date"]
+        res_data.append({"date": prev_date, "data": data})  # 마지막 날짜 데이터
+        return Response(res_data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 당뇨인이 아니라면 등록 거부
+        if user.is_diabetes is False:
+            return Response({"error": "당뇨인 본인만 혈당을 입력할 수 있습니다."}, status=status.HTTP_403_FORBIDDEN)
+
+        # request body 데이터 유효성 검사
+        serializer = BloodSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 그룹 내 오늘의 식단 정보 맞는지 검사
+        try:
+            diet_data = BloodSugarLevel.objects.get(id=request.data["id"])
+        except:
+            return Response({"error": "존재하지 않는 식단입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 식후 혈당량 이미 있는지 검사
+        if diet_data.level is not None:
+            return Response({"error": "식후 혈당량 값이 이미 존재합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(validated_data=request.data)
         return Response(status=status.HTTP_201_CREATED)

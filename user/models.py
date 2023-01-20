@@ -50,6 +50,9 @@ class Info(BaseModel):
     height = models.FloatField(default=None, null=True)  # 키
     weight = models.FloatField(default=None, null=True)  # 몸무게
     gender = models.CharField(max_length=1, choices=GenderType.choices, default=GenderType.NOCHOICES, null=True)  # 성별
+    age = models.PositiveIntegerField(validators=[MaxValueValidator(200)], default=None, null=True)  # 나이
+    bmr = models.FloatField(default=None, null=True)  # 기초대사량
+    amr = models.FloatField(default=None, null=True)  # 활동대사량
     is_diabetes = models.BooleanField(default=False)  # 당뇨환자여부
     activity = models.IntegerField(default=ActivityType.NOCHOICES, choices=ActivityType.choices, null=True)  # 활동수준
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)  # 그룹코드 ID
