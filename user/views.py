@@ -487,7 +487,7 @@ class BloodSugarLevelView(APIView):
 
         # 그룹 내 오늘의 식단 정보 맞는지 검사
         try:
-            diet_data = BloodSugarLevel.objects.get(id=request.data["id"])
+            diet_data = BloodSugarLevel.objects.get(id=request.data["id"], user_id__group=user.group_id)
         except:
             return Response({"error": "존재하지 않는 식단입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -501,6 +501,14 @@ class BloodSugarLevelView(APIView):
 
 # 주간 혈당 리포트 api
 class BloodLevelReportView(APIView):
+    def get_blood_level(self, blood_sugar_level):
+        if blood_sugar_level >= 140:  # 고혈당
+            return 2
+        elif blood_sugar_level >= 70:  # 정상 혈당
+            return 1
+        else:  # 저혈당
+            return 0
+
     def get(self, request):
         # 인가확인
         if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
@@ -511,31 +519,47 @@ class BloodLevelReportView(APIView):
         user = get_object_or_404(Info, user_id=user_id)
 
         # 현재 날짜 가져오기
-        end_date = datetime.now().date()
-        start_date = end_date - timedelta(days=6)
+        end_date = datetime.now().date()  # 현재 날짜
+        start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
 
         # 일주일간 그룹의 식후 혈당량 정보 가져오기
         try:
             all_blood_data = BloodSugarLevel.objects.filter(user_id__group=user.group_id)
-            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date])
+            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by('created_at__date')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # 일주일간 데이터가 총 데이터 수와 같다면 (아직 서비스 가입 후 일주일이 지나지 않음)
         if all_blood_data.count() == blood_data.count():
-            start_date = blood_data[blood_data.count() - 1].created_at.date()
+            start_date = blood_data[0].created_at.date()
 
-        # 요일별 평균 내기
-        days = []
-        for i in range(0, 7):
-            days.append(end_date - timedelta(days=i))
-        result = BloodSugarLevel.objects.filter(created_at__date__in=days).values_list('created_at__date').\
-            annotate(Avg('level')).filter(user_id__group=user.group_id).order_by('-created_at__date')
+        # 요일 별 혈당량 평균과 저혈당, 정상혈당, 고혈당 개수 세기
+        data = []
+        cur_date = end_date
+        blood_level = [0, 0, 0]  # 0: 저혈당 요일 수, 1: 정상 혈당 요일 수, 2: 고혈당 요일 수
+        days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+        print(cur_date, start_date)
+        while cur_date >= start_date:
+            date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date').\
+                annotate(Avg('level')).filter(user_id__group=user.group_id, level__isnull=False)
+            if date_level_avg.count() == 0:
+                data.append({"is_exist": False})
+            else:
+                day = date_level_avg[0]["created_at__date"].weekday()
+                level = self.get_blood_level(date_level_avg[0]["level__avg"])
+                blood_level[level] += 1
+                data.append({"is_exist": True, "day": days[day], "level": level})
+            cur_date -= timedelta(days=1)  # 하루 빼기
 
-        print(result)
-
-        serializer = BloodDietSerializer(blood_data, many=True, context={"request":request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        res_data = {
+            "start": start_date.strftime('%Y.%m.%d')[2:10],
+            "end": end_date.strftime('%Y.%m.%d')[2:10],
+            "low": blood_level[0],
+            "common": blood_level[1],
+            "high": blood_level[2],
+            "data": data
+        }
+        return Response(res_data, status=status.HTTP_200_OK)
 
 
 
