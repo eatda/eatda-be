@@ -76,8 +76,10 @@ class UserCharacterView(APIView):
     def get(self, request):
         try:
             # 그룹 내 유저들의 캐릭터 ID 받아오기
-            group_id = request.GET.get('groupid')
-            group_list = Info.objects.filter(group=group_id).values()  # 해당하는 그룹id의 유저들 get
+            group = request.GET.get('group')
+            if Group.objects.filter(code=group).exists() is False:
+                return Response({"error": "올바른 그룹 코드를 적어주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            group_list = Info.objects.filter(group__code=group).values()  # 해당하는 그룹 code의 유저들 get
             selected_character = list()
 
             for users in group_list:
