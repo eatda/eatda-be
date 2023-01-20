@@ -240,7 +240,11 @@ class HomeLikeView(APIView):
         user_id = AuthView.get(self, request).data['user_id']
         user = get_object_or_404(Info, user_id=user_id)
 
-        react = request.data["react"]
+        try:
+            react = request.data["react"]
+        except:
+            react = Like.ReactionType.HEART
+
         target = request.data["target"]
         timeline = request.data["timeline"]
 
@@ -271,12 +275,17 @@ class HomeLikeView(APIView):
         user = get_object_or_404(Info, user_id=user_id)
 
         try:
-            react = request.data["react"]
+            try:
+                react = request.data["react"]
+            except:
+                react = Like.ReactionType.HEART
+
             target = request.data["target"]
             timeline = request.data["timeline"]
 
             # 반응 존재 확인
-            if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists() is False:
+            if Like.objects.filter(user_id__user=user_id, react=react, target=target,
+                                   timeline=timeline).exists() is False:
                 return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
 
             # 좋아요 필드에서 선택 삭제
