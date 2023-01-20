@@ -52,6 +52,7 @@ class UserInfoDetailView(APIView):
                         'weight': info_serializer.data['weight'],
                         'gender': info_serializer.data['gender'],
                         'age': info_serializer.data['age'],
+                        'activity': info_serializer.data['activity'],
                         'is_diabetes': info_serializer.data['is_diabetes'],
                         'group': info_serializer.data['group_code'],
                         'allergy': allergy_filter
@@ -589,11 +590,17 @@ class DietRankView(APIView):
 
         best, worst = [], []
 
+        # 현재 날짜 가져오기
+        end_date = datetime.now().date()  # 현재 날짜
+        start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
+
         # 해당 유저의 식후 혈당량 가져오기
         try:
-            high_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+            high_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
+                                                             created_at__date__range=[start_date, end_date]).order_by(
                 '-level')
-            low_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+            low_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
+                                                            created_at__date__range=[start_date, end_date]).order_by(
                 'level')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -649,7 +656,8 @@ class BloodLevelReportView(APIView):
         # 일주일간 그룹의 식후 혈당량 정보 가져오기
         try:
             all_blood_data = BloodSugarLevel.objects.filter(user_id__group=user.group_id)
-            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by('created_at__date')
+            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by(
+                'created_at__date')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -664,7 +672,7 @@ class BloodLevelReportView(APIView):
         days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
         print(cur_date, start_date)
         while cur_date >= start_date:
-            date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date').\
+            date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date'). \
                 annotate(Avg('level')).filter(user_id__group=user.group_id, level__isnull=False)
             if date_level_avg.count() == 0:
                 data.append({"day": days[cur_date.weekday()], "level": 0})
@@ -684,7 +692,3 @@ class BloodLevelReportView(APIView):
             "data": data
         }
         return Response(res_data, status=status.HTTP_200_OK)
-
-
-
-
