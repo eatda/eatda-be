@@ -14,7 +14,7 @@ from diet.models import Data
 from diet.serializers import DietSimpleSerializer
 from user.models import Character, Info, Group, UserAllergy, BloodSugarLevel, Like, OurPick
 from user.serializers import CharacterSerializer, GroupSerializer, InfoSerializer, UserAllergySerializer, \
-    BloodSerializer, DietSerializer, OurPickSerializer, BloodDietSerializer
+    BloodSerializer, DietSerializer, OurPickSerializer, BloodDietSerializer, HomeLikeSerializer
 
 from datetime import datetime
 
@@ -227,6 +227,75 @@ class UserHomeView(APIView):
             "blood_sugar_level": blood_sugar_level
         }
         return Response(res_data, status=status.HTTP_200_OK)
+
+
+# 홈화면에서 좋아요 눌렀을 때 api
+class HomeLikeView(APIView):
+    def post(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            react = request.data["react"]
+        except:
+            react = Like.ReactionType.HEART
+
+        target = request.data["target"]
+        timeline = request.data["timeline"]
+
+        serializer = HomeLikeSerializer(data={
+            "user_id": user_id,
+            "react": react,
+            "target": target,
+            "timeline": timeline
+        })
+
+        serializer.is_valid(raise_exception=True)
+
+        # 이미 좋아요한 유저, 반응, 타겟 및 시간대인지 확인
+        if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists():
+            return Response({"error": "이미 해당 시간대에 반응을 표시한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
+
+        print(serializer.data)
+        serializer.save(serializer.data)
+        return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            try:
+                react = request.data["react"]
+            except:
+                react = Like.ReactionType.HEART
+
+            target = request.data["target"]
+            timeline = request.data["timeline"]
+
+            # 반응 존재 확인
+            if Like.objects.filter(user_id__user=user_id, react=react, target=target,
+                                   timeline=timeline).exists() is False:
+                return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
+
+            # 좋아요 필드에서 선택 삭제
+            like = Like.objects.get(user_id__user=user_id, react=react, target=target, timeline=timeline)
+            like.delete()
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # 오늘의 식단 등록 api
