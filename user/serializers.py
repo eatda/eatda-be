@@ -62,7 +62,7 @@ class InfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Info
         fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'age', 'is_diabetes',
-                  'activity', 'group', 'group_code']
+                  'activity', 'group', 'group_code', 'bmr', 'amr']
         extra_kwargs = {
             'height': {'required': True},
             'weight': {'required': True},
@@ -70,6 +70,19 @@ class InfoSerializer(serializers.ModelSerializer):
             'activity': {'required': True},
             'age': {'required': True}
         }
+
+    # 기초 대사량 계산
+    def cal_bmr(self, g, w, h, a):
+        result = (9.99 * w) + (6.25 * h) - (4.95 * a)
+        if g == 'f':  # 여성
+            return result - 161.0
+        else:  # 남성
+            return result + 5.0
+
+    # 활동 대사량 계산
+    def cal_amr(self, bmr, act):
+        multipliers = [1.2, 1.375, 1.55, 1.725, 1.9]
+        return bmr * multipliers[act]
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -85,6 +98,7 @@ class InfoSerializer(serializers.ModelSerializer):
         activity = validated_data.get('activity')
         group = validated_data.get('group')
         group_id = Group.objects.get(code=group).id
+        bmr = self.cal_bmr(gender, weight, height, age)
 
         info = Info(
             user_id=user_id,
@@ -96,7 +110,9 @@ class InfoSerializer(serializers.ModelSerializer):
             age=age,
             is_diabetes=is_diabetes,
             activity=activity,
-            group_id=group_id
+            group_id=group_id,
+            bmr=bmr,
+            amr=self.cal_amr(bmr, activity)
         )
         # 유저 정보 저장
         info.save()
