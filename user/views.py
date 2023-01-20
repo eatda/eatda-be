@@ -52,6 +52,7 @@ class UserInfoDetailView(APIView):
                         'weight': info_serializer.data['weight'],
                         'gender': info_serializer.data['gender'],
                         'age': info_serializer.data['age'],
+                        'activity': info_serializer.data['activity'],
                         'is_diabetes': info_serializer.data['is_diabetes'],
                         'group': info_serializer.data['group_code'],
                         'allergy': allergy_filter
@@ -72,7 +73,7 @@ class UserInfoDetailView(APIView):
             raise exceptions.ValidationError(detail='Please login again')
 
 
-# 유저 캐릭터 리스트 가져오느 api
+# 유저 캐릭터 리스트 가져오는 api
 class UserCharacterView(APIView):
     def get(self, request):
         try:
@@ -261,9 +262,11 @@ class HomeLikeView(APIView):
         })
 
         serializer.is_valid(raise_exception=True)
+        date = datetime.now().date()
 
         # 이미 좋아요한 유저, 반응, 타겟 및 시간대인지 확인
-        if Like.objects.filter(user_id__user=user_id, react=react, target=target, timeline=timeline).exists():
+        if Like.objects.filter(user_id__user=user_id, react=react, target=target,
+                               timeline=timeline, created_at__date=date).exists():
             return Response({"error": "이미 해당 시간대에 반응을 표시한 식단입니다."}, status=status.HTTP_403_FORBIDDEN)
 
         print(serializer.data)
@@ -287,14 +290,16 @@ class HomeLikeView(APIView):
 
             target = request.data["target"]
             timeline = request.data["timeline"]
+            date = datetime.now().date()
 
             # 반응 존재 확인
             if Like.objects.filter(user_id__user=user_id, react=react, target=target,
-                                   timeline=timeline).exists() is False:
+                                   timeline=timeline, created_at__date=date).exists() is False:
                 return Response({"error": "반응한 요소가 없습니다"}, status=status.HTTP_403_FORBIDDEN)
 
             # 좋아요 필드에서 선택 삭제
-            like = Like.objects.get(user_id__user=user_id, react=react, target=target, timeline=timeline)
+            like = Like.objects.get(user_id__user=user_id, react=react, target=target,
+                                    timeline=timeline, created_at__date=date)
             like.delete()
 
         except Exception as e:
@@ -585,11 +590,17 @@ class DietRankView(APIView):
 
         best, worst = [], []
 
+        # 현재 날짜 가져오기
+        end_date = datetime.now().date()  # 현재 날짜
+        start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
+
         # 해당 유저의 식후 혈당량 가져오기
         try:
-            high_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+            high_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
+                                                             created_at__date__range=[start_date, end_date]).order_by(
                 '-level')
-            low_blood_list = BloodSugarLevel.objects.filter(user_id__user=user_id, level__isnull=False).order_by(
+            low_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
+                                                            created_at__date__range=[start_date, end_date]).order_by(
                 'level')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -645,7 +656,8 @@ class BloodLevelReportView(APIView):
         # 일주일간 그룹의 식후 혈당량 정보 가져오기
         try:
             all_blood_data = BloodSugarLevel.objects.filter(user_id__group=user.group_id)
-            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by('created_at__date')
+            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by(
+                'created_at__date')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -660,7 +672,7 @@ class BloodLevelReportView(APIView):
         days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
         print(cur_date, start_date)
         while cur_date >= start_date:
-            date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date').\
+            date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date'). \
                 annotate(Avg('level')).filter(user_id__group=user.group_id, level__isnull=False)
             if date_level_avg.count() == 0:
                 data.append({"day": days[cur_date.weekday()], "level": 0})
@@ -680,7 +692,3 @@ class BloodLevelReportView(APIView):
             "data": data
         }
         return Response(res_data, status=status.HTTP_200_OK)
-
-
-
-
