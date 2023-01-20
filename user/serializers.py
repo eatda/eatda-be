@@ -18,11 +18,11 @@ class InfoAuthSerializer(serializers.ModelSerializer):
 # 기본 유저 정보 (비당뇨인 전체 정보)
 class InfoBasicSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    group_id = serializers.IntegerField(required=True)
+    group = serializers.CharField(required=True)
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group_id']
+        fields = ['user_id', 'name', 'character', 'is_diabetes', 'group']
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -31,7 +31,8 @@ class InfoBasicSerializer(serializers.ModelSerializer):
         name = validated_data.get('name')
         character = validated_data.get('character')
         is_diabetes = validated_data.get('is_diabetes')
-        group_id = validated_data.get('group_id')
+        group = validated_data.get('group')
+        group_id = Group.objects.get(code=group).id
 
         info = Info(
             user_id=user_id,
@@ -48,19 +49,19 @@ class InfoBasicSerializer(serializers.ModelSerializer):
 # 유저 전체 정보 (당뇨인)
 class InfoSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(read_only=True)
-    height = serializers.FloatField(required=True)
-    weight = serializers.FloatField(required=True)
-    group_id = serializers.IntegerField(required=True)
+    group = serializers.CharField(required=True)
 
     class Meta:
         model = Info
-        fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'is_diabetes',
-                  'activity', 'group_id']
-
-    def validate(self, data):
-        if data.get("gender") is None or data.get("activity") is None:
-            raise serializers.ValidationError("You have to fill all information")
-        return data
+        fields = ['user_id', 'name', 'character', 'height', 'weight', 'gender', 'age', 'is_diabetes',
+                  'activity', 'group']
+        extra_kwargs = {
+            'height': {'required': True},
+            'weight': {'required': True},
+            'gender': {'required': True},
+            'activity': {'required': True},
+            'age': {'required': True}
+        }
 
     def save(self, validated_data):
         social_id = validated_data.get('social_id')
@@ -71,9 +72,11 @@ class InfoSerializer(serializers.ModelSerializer):
         height = validated_data.get('height')
         weight = validated_data.get('weight')
         gender = validated_data.get('gender')
+        age = validated_data.get('age')
         is_diabetes = validated_data.get('is_diabetes')
         activity = validated_data.get('activity')
-        group_id = validated_data.get('group_id')
+        group = validated_data.get('group')
+        group_id = Group.objects.get(code=group).id
 
         info = Info(
             user_id=user_id,
@@ -82,6 +85,7 @@ class InfoSerializer(serializers.ModelSerializer):
             height=height,
             weight=weight,
             gender=gender,
+            age=age,
             is_diabetes=is_diabetes,
             activity=activity,
             group_id=group_id
