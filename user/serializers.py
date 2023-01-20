@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from user.models import Info, UserAllergy, Character, Group, BloodSugarLevel, OurPick
+from user.models import Info, UserAllergy, Character, Group, BloodSugarLevel, OurPick, Like
 from diet.serializers import DietSimpleSerializer
 from django.contrib.auth import get_user_model
 
@@ -207,3 +207,27 @@ class OurPickSerializer(serializers.ModelSerializer):
     class Meta:
         model = OurPick
         fields = ['user_id', 'diet_id']
+
+
+# 유저가 홈화면에서 좋아요 눌렀을 때 api
+class HomeLikeSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+
+    def save(self, validated_data):
+        user_id = validated_data.get('user_id')
+        react = validated_data.get('react')
+        target = validated_data.get('target')
+        timeline = validated_data.get('timeline')
+
+        like = Like(
+            user_id = user_id,
+            react = react,
+            target = target,
+            timeline = timeline
+        )
+        like.save()
+        return like
+
+    class Meta:
+        model = Like
+        fields = ['user_id', 'react', 'target', 'timeline']
