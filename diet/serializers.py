@@ -42,6 +42,7 @@ class FilterSerializer(serializers.ModelSerializer):
 
 class DietDataSerializer(serializers.ModelSerializer):
     menu = serializers.SerializerMethodField(read_only=True)
+    ingredient = serializers.JSONField(default=list)
     recipe = serializers.JSONField(default=list)
     tip = serializers.JSONField(default=list)
     image = serializers.SerializerMethodField(read_only=True)

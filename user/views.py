@@ -663,7 +663,10 @@ class BloodLevelReportView(APIView):
 
         # 일주일간 데이터가 총 데이터 수와 같다면 (아직 서비스 가입 후 일주일이 지나지 않음)
         if all_blood_data.count() == blood_data.count():
-            start_date = blood_data[0].created_at.date()
+            if blood_data.count() == 0:
+                start_date = end_date
+            else:
+                start_date = blood_data[0].created_at.date()
 
         # 요일 별 혈당량 평균과 저혈당, 정상혈당, 고혈당 개수 세기
         data = []
@@ -691,4 +694,37 @@ class BloodLevelReportView(APIView):
             "high": blood_level[3],
             "data": data
         }
+        return Response(res_data, status=status.HTTP_200_OK)
+
+
+# 유저 맞춤형 식단 추천 API
+class DietFitView(APIView):
+    def get(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 현재 날짜 가져오기
+        end_date = datetime.now().date()  # 현재 날짜
+        start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
+
+        # 일주일 이내 식후 혈당량 오름차순 정렬해서 가져오기
+        try:
+            blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
+                                                        created_at__date__range=[start_date, end_date]).order_by(
+                'level')
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if blood_list.count() < 3:
+            return Response({"error": "아직 나에게 딱 맞는 레시피가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        res_data = []
+        serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
+        for i in range(0, 2):
+            res_data.append(serializer.data[i]["diet"])
         return Response(res_data, status=status.HTTP_200_OK)
