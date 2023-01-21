@@ -173,7 +173,7 @@ class DietDataView(APIView):
         # 그룹의 당뇨인의 amr 가져오기
         amr = None
         if Info.objects.filter(group=user.group_id, is_diabetes=True).exists():
-            amr = Info.objects.get(group=user.group_id, is_diabetes=True).amr
+            amr = Info.objects.filter(group=user.group_id, is_diabetes=True)[0].amr
 
         # 유저 활동 대사량에 따른 칼로리 범위 구하기
         start, end = self.get_min_max_kcal(amr)
@@ -220,4 +220,4 @@ class DietDataView(APIView):
 
         feat_diet = feat_diet.filter(q).distinct()
         serializer = DietSimpleSerializer(feat_diet, many=True, context={"request": request})
-        return Response({"개수": len(feat_diet), "data":serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
