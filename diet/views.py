@@ -1,5 +1,6 @@
 import ast
 
+from django.db.models import Sum, F
 from django.http import JsonResponse
 
 # Create your views here.
@@ -8,6 +9,8 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from account.views import AuthView
+from user.models import Info
 from diet.models import DietAllergy, Filter, FilterCategory, Data, MainSide
 from diet.serializers import DietAllergySerializer, FilterSerializer, FilterCategorySerializer, DietDataSerializer, \
     DietSimpleSerializer
@@ -137,11 +140,44 @@ class DietDataDetailView(APIView):
 
 # 식단 전체 리스트 가져오는 API
 class DietDataView(APIView):
+    def get_min_max_kcal(self, amr):  # 활동대사량에 따른 칼로리 범위
+        if amr is None:
+            return 0, 2000
+        elif amr >= 2400:
+            return 600, 2000
+        elif amr >= 2100:
+            return 500, 700
+        elif amr >= 1800:
+            return 400, 600
+        return 0, 500
+
     def get(self, request):
-        try:  # 식단 전체 리스트
-            all_diet_list = Data.objects.all()
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 유저 활동 대사량에 따른 칼로리 범위 구하기
+        start, end = self.get_min_max_kcal(user.amr)
+
+        # 활동 대사량에 맞춘 식단 필터링
+        try:
+            data = Data.objects. \
+                annotate(side_total_calorie=Sum('side__total_calorie')). \
+                annotate(total=F('total_calorie') + F('side_total_calorie')). \
+                filter(total__isnull=False, total__gte=start, total__lte=end)  # 사이드 메뉴 있는 식단 필터링
+            data2 = Data.objects. \
+                annotate(side_total_calorie=Sum('side__total_calorie')). \
+                annotate(total=F('total_calorie') + F('side_total_calorie')). \
+                filter(total__isnull=True, total_calorie__gte=start, total_calorie__lte=end)  # 주메뉴만 있는 식단 필터링
+            feat_diet = data.union(data2)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = DietSimpleSerializer(all_diet_list, many=True, context={"request": request})
+        
+
+        serializer = DietSimpleSerializer(feat_diet, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
