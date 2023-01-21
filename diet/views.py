@@ -170,8 +170,13 @@ class DietDataView(APIView):
         user_id = AuthView.get(self, request).data['user_id']
         user = get_object_or_404(Info, user_id=user_id)
 
+        # 그룹의 당뇨인의 amr 가져오기
+        amr = None
+        if Info.objects.filter(group=user.group_id, is_diabetes=True).exists():
+            amr = Info.objects.get(group=user.group_id, is_diabetes=True).amr
+
         # 유저 활동 대사량에 따른 칼로리 범위 구하기
-        start, end = self.get_min_max_kcal(user.amr)
+        start, end = self.get_min_max_kcal(amr)
 
         # 활동 대사량에 맞춘 식단 필터링
         try:
