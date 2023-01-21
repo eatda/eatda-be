@@ -32,7 +32,7 @@ class Data(BaseModel):
     province = models.FloatField(default=0)  # 지방
     salt = models.FloatField(default=0)  # 나트륨
     total_calorie = models.FloatField(default=0)  # 총 칼로리
-    ingredient = models.JSONField(default=list)  # 재료
+    ingredient = models.TextField(default='[]')  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
     user = models.ForeignKey('user.Info', on_delete=models.SET_NULL, null=True, default=None)  # 작성자
@@ -42,6 +42,7 @@ class Data(BaseModel):
                                related_name='%(class)s_flavor', default=None)  # 맛
     carbohydrate_type = models.ForeignKey(Filter, on_delete=models.SET_NULL,
                                           null=True, related_name='%(class)s_carbohydrate_type', default=None)  # 현미 종류
+    side = models.ManyToManyField('SideData', through='MainSide', related_name='main')
 
 
 # 사이드 식단 테이블
@@ -53,7 +54,7 @@ class SideData(BaseModel):
     province = models.FloatField(default=0)  # 지방
     salt = models.FloatField(default=0)  # 나트륨
     total_calorie = models.FloatField(default=0)  # 총 칼로리
-    ingredient = models.JSONField(default=list)  # 재료
+    ingredient = models.TextField(default='[]')  # 재료
     recipe = models.TextField(default='')  # 레시피
     tip = models.TextField(default='')  # 건강 비결
     user = models.ForeignKey('user.Info', on_delete=models.SET_NULL, null=True, default=None)  # 작성자
@@ -67,8 +68,8 @@ class SideData(BaseModel):
 
 # 사이드 메뉴 관계 테이블
 class MainSide(BaseModel):
-    main = models.ForeignKey(Data, on_delete=models.CASCADE, related_name='main')  # 메인 메뉴
-    side = models.ForeignKey(SideData, on_delete=models.CASCADE, related_name='side')  # 사이드 메뉴
+    main = models.ForeignKey(Data, on_delete=models.CASCADE, related_name='main_side')  # 메인 메뉴
+    side = models.ForeignKey(SideData, on_delete=models.CASCADE, related_name='main_side')  # 사이드 메뉴
 
 
 # 알러지 테이블
