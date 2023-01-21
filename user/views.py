@@ -663,7 +663,10 @@ class BloodLevelReportView(APIView):
 
         # 일주일간 데이터가 총 데이터 수와 같다면 (아직 서비스 가입 후 일주일이 지나지 않음)
         if all_blood_data.count() == blood_data.count():
-            start_date = blood_data[0].created_at.date()
+            if blood_data.count() == 0:
+                start_date = end_date
+            else:
+                start_date = blood_data[0].created_at.date()
 
         # 요일 별 혈당량 평균과 저혈당, 정상혈당, 고혈당 개수 세기
         data = []
