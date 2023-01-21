@@ -220,4 +220,4 @@ class DietDataView(APIView):
 
         feat_diet = feat_diet.filter(q).distinct()
         serializer = DietSimpleSerializer(feat_diet, many=True, context={"request": request})
-        return Response({"개수": len(feat_diet), "data":serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
