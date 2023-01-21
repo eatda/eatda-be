@@ -87,6 +87,7 @@ class DietDataDetailView(APIView):
         try:
             # 주 식단 얻기
             diet = self.get_object(id)
+            diet.ingredient = ast.literal_eval(diet.ingredient)
             menu_list = []  # 식단 메뉴들 리스트
             menu_list = self.get_menu(menu_list, diet.name)
 
@@ -105,6 +106,7 @@ class DietDataDetailView(APIView):
                 diet_side = MainSide.objects.filter(main_id=id)
                 for data in diet_side:
                     side_menu = data.side
+                    side_menu.ingredient = ast.literal_eval(side_menu.ingredient)
 
                     # 사이드 메뉴의 레시피가 있는 경우 추가
                     if side_menu.recipe != '':
