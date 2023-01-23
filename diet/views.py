@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from account.views import AuthView
-from user.models import Info
+from user.models import Info, OurPick
 from diet.models import DietAllergy, Filter, FilterCategory, Data, MainSide
 from diet.serializers import DietAllergySerializer, FilterSerializer, FilterCategorySerializer, DietDataSerializer, \
     DietSimpleSerializer
@@ -142,7 +142,7 @@ class DietDataDetailView(APIView):
 class DietDataView(APIView):
     def get_query_array(self, query):  # 쿼리 스트링 array로 변환
         return [int(x) for x in query.split(',')]
-    
+
     def get_min_max_kcal(self, amr):  # 활동대사량에 따른 칼로리 범위
         if amr is None:
             return 0, 2000
@@ -188,8 +188,8 @@ class DietDataView(APIView):
                 annotate(side_total_calorie=Sum('side__total_calorie')). \
                 annotate(total=F('total_calorie') + F('side_total_calorie')). \
                 filter(total__isnull=True, total_calorie__gte=start, total_calorie__lte=end)  # 주메뉴만 있는 식단 필터링
-            feat_diet = data | data2
-            # feat_diet = data.union(data2)  # 필드 에러 걱정 없이 합칠 수 있지만, union으로 합치면 filter가 안됨
+            fit_diet = data | data2
+            # fit_diet = data.union(data2)  # 필드 에러 걱정 없이 합칠 수 있지만, union으로 합치면 filter가 안됨
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -200,10 +200,10 @@ class DietDataView(APIView):
         meat = request.GET.get('meat', None)  # 고기
         vegetable = request.GET.get('vegetable', None)  # 채소
 
-        # feat_diet = Data.objects.all()
+        # fit_diet = Data.objects.all()
         # 필터 만들기
         q = Q()
-        # q &= Q(id__in=feat_diet.values('id'))  # union으로 합쳤을 때 쓸 수 있는 코드. 다시 filter 걸기
+        # q &= Q(id__in=fit_diet.values('id'))  # union으로 합쳤을 때 쓸 수 있는 코드. 다시 filter 걸기
         if type:  # 음식 종류
             q &= Q(type_id__in=self.get_query_array(type))
         if flavor:  # 맛
@@ -218,6 +218,10 @@ class DietDataView(APIView):
             query_list = self.get_query_array(vegetable)
             q &= self.get_filter_ingredient(query_list)
 
-        feat_diet = feat_diet.filter(q).distinct()
-        serializer = DietSimpleSerializer(feat_diet, many=True, context={"request": request})
+        fit_diet = fit_diet.filter(q).distinct()
+        serializer = DietSimpleSerializer(fit_diet, many=True, context={"request": request})
+        for data in serializer.data:  # 본인의 좋아요 여부
+            data["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id,
+                                                                 diet_id=data["id"]).exists() else False
+
         return Response(serializer.data, status=status.HTTP_200_OK)
