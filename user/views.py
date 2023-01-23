@@ -726,5 +726,7 @@ class DietFitView(APIView):
         res_data = []
         serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
         for i in range(0, 2):
+            serializer.data[i]["diet"]["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id, diet_id=
+            serializer.data[i]["diet"]["id"]).exists() else False
             res_data.append(serializer.data[i]["diet"])
         return Response(res_data, status=status.HTTP_200_OK)
