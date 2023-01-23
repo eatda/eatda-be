@@ -127,21 +127,17 @@ class UserGroupView(APIView):
 
     # 그룹 코드 검증
     def post(self, request):
-        id = request.data["id"]
-        code = request.data["code"]
+        code = request.data.get("code")
 
         # 그룹 코드 조회
         try:
-            data = Group.objects.get(id=id)
+            group = Group.objects.get(code=code)
         except Exception as e:
-            return Response({"error": "존재하지 않는 그룹입니다."}, status=status.HTTP_404_NOT_FOUND)
-
-        if data.code != code:
             return Response({"error": "존재하지 않는 그룹입니다."}, status=status.HTTP_404_NOT_FOUND)
 
         # 그룹 인원 수 조회
         try:
-            group_users = Info.objects.filter(group_id=id)
+            group_users = Info.objects.filter(group_id=group.id)
         except Exception as e:
             return Response({"error": e}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -150,7 +146,7 @@ class UserGroupView(APIView):
             return Response({"error": "이미 인원이 모두 찬 그룹입니다."}, status=status.HTTP_403_FORBIDDEN)
 
         # 당뇨인 조회
-        is_diabetes = True if group_users.filter(is_diabetes=True).count() == 1 else False
+        is_diabetes = True if group_users.filter(is_diabetes=True).exists() else False
         return Response({"is_diabetes": is_diabetes}, status=status.HTTP_200_OK)
 
 
