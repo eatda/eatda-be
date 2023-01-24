@@ -114,3 +114,18 @@ class AuthView(APIView):
         except jwt.exceptions.ExpiredSignatureError:
             # 토큰 만료 기간 다 됨
             return Response({"message": "토큰 기간 만료"}, status=status.HTTP_403_FORBIDDEN)
+
+
+# 계정 관리
+class AccountView(APIView):
+    def delete(self, request):  # 계정 삭제 (테스트용)
+        social_id = request.data.get("social_id")
+
+        # 유저 찾고, 삭제하기
+        try:
+            user = User.objects.get(social_id=social_id)
+            user.delete()
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
