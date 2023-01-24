@@ -99,7 +99,8 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
     'Refresh-Authorization'
 ]
-CORS_ORIGIN_WHITELIST = ['http://localhost:3000', 'https://eatda-fe.vercel.app', 'https://eat-da.co.kr']
+CORS_ORIGIN_WHITELIST = ['http://localhost:3000', 'https://eatda-fe.vercel.app', 'https://eatda-fe-domain.vercel.app',
+                         'https://eat-da.co.kr']
 
 ROOT_URLCONF = 'eatda_be.urls'
 
