@@ -352,6 +352,30 @@ class UserDietView(APIView):
         serializer.save()
         return Response(status=status.HTTP_201_CREATED)
 
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        # 오늘의 식단 삭제 전 데이터 유효성 검사
+        diet_id = request.data.get("diet_id")
+        timeline = request.data.get("timeline")
+
+        # 현재 날짜 가져오기
+        date = datetime.now().date()
+
+        try:
+            data = BloodSugarLevel.objects.get(user_id__group=user.group_id, created_at__contains=date,
+                                               timeline=timeline, diet_id=diet_id)
+            data.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # 유저가 선택한 Our-Pick 관련 api
 class OurPickView(APIView):
@@ -571,6 +595,24 @@ class BloodSugarLevelView(APIView):
 
         serializer.save(validated_data=request.data)
         return Response(status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        # 인가확인
+        if AuthView.get(self, request).status_code is not status.HTTP_200_OK:
+            return Response({"error": "로그인 필요"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 접속한 유저 정보 가져오기
+        user_id = AuthView.get(self, request).data['user_id']
+        user = get_object_or_404(Info, user_id=user_id)
+
+        try:
+            diet_data = BloodSugarLevel.objects.get(id=request.data["id"], user_id__group=user.group_id)
+            diet_data.level = 0
+            diet_data.time = ""
+            diet_data.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # best & worst top 3 식단 api
