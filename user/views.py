@@ -768,3 +768,15 @@ class DietFitView(APIView):
             serializer.data[i]["diet"]["id"]).exists() else False
             res_data.append(serializer.data[i]["diet"])
         return Response(res_data, status=status.HTTP_200_OK)
+
+
+# (테스트용) 유저의 모든 식후혈당 기록 삭제하는 API
+class TestDietAllView(APIView):
+    def delete(self, request):
+        social_id = request.data.get("social_id")
+        try:
+            data = BloodSugarLevel.objects.filter(user_id__user_id__social_id=social_id)
+            data.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
