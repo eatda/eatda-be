@@ -687,24 +687,20 @@ class BloodLevelReportView(APIView):
         user_id = AuthView.get(self, request).data['user_id']
         user = get_object_or_404(Info, user_id=user_id)
 
+        # 해당 그룹의 당뇨인 정보 가져오기
+        user_diabetes = Info.objects.filter(group_id=user.group_id, is_diabetes=True)
+
+        if user_diabetes.count() == 0:  # 아직 그룹에 당뇨인이 없다면
+            return Response({"error": "아직 그룹에 당뇨인이 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
         # 현재 날짜 가져오기
         end_date = datetime.now().date()  # 현재 날짜
         start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
+        join_date = user_diabetes[0].created_at.date()  # 가입 날짜
 
-        # 일주일간 그룹의 식후 혈당량 정보 가져오기
-        try:
-            all_blood_data = BloodSugarLevel.objects.filter(user_id__group=user.group_id)
-            blood_data = all_blood_data.filter(created_at__date__range=[start_date, end_date]).order_by(
-                'created_at__date')
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        # 일주일간 데이터가 총 데이터 수와 같다면 (아직 서비스 가입 후 일주일이 지나지 않음)
-        if all_blood_data.count() == blood_data.count():
-            if blood_data.count() == 0:
-                start_date = end_date
-            else:
-                start_date = blood_data[0].created_at.date()
+        # 아직 가입 후 일주일이 안지났다면
+        if start_date < join_date:
+            start_date = join_date
 
         # 요일 별 혈당량 평균과 저혈당, 정상혈당, 고혈당 개수 세기
         data = []
@@ -725,6 +721,7 @@ class BloodLevelReportView(APIView):
             cur_date -= timedelta(days=1)  # 하루 빼기
 
         res_data = {
+            "name": user_diabetes[0].name,
             "start": start_date.strftime('%Y.%m.%d')[2:10],
             "end": end_date.strftime('%Y.%m.%d')[5:10],
             "low": blood_level[1],
