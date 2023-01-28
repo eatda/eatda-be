@@ -125,16 +125,17 @@ class BloodLevelReportView(APIView):
         join_date = user_diabetes[0].created_at.date()  # 가입 날짜
 
         # 아직 가입 후 일주일이 안지났다면
+        empty_date_cnt = 0
         if start_date < join_date:
+            empty_date_cnt = (join_date - start_date).days
             start_date = join_date
 
         # 요일 별 혈당량 평균과 저혈당, 정상혈당, 고혈당 개수 세기
         data = []
-        cur_date = end_date
+        cur_date = start_date
         blood_level = [0, 0, 0, 0]  # 1: 저혈당 요일 수, 2: 정상 혈당 요일 수, 3: 고혈당 요일 수
         days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-        print(cur_date, start_date)
-        while cur_date >= start_date:
+        while cur_date <= end_date:
             date_level_avg = BloodSugarLevel.objects.filter(created_at__date=cur_date).values('created_at__date'). \
                 annotate(Avg('level')).filter(user_id__group=user.group_id, level__isnull=False)
             if date_level_avg.count() == 0:
@@ -144,7 +145,13 @@ class BloodLevelReportView(APIView):
                 level = self.get_blood_level(date_level_avg[0]["level__avg"])
                 blood_level[level] += 1
                 data.append({"day": days[day], "level": level})
-            cur_date -= timedelta(days=1)  # 하루 빼기
+            cur_date += timedelta(days=1)  # 하루 더하기
+
+        # 일주일 안 지났을 경우 빈 칸 채워주기
+        for i in range(1, empty_date_cnt + 1):
+            empty_date = end_date + timedelta(days=i)
+            day = empty_date.weekday()
+            data.append({"day": days[day], "level": 0})
 
         res_data = {
             "name": user_diabetes[0].name,
