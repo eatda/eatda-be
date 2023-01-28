@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
@@ -261,30 +262,35 @@ class DietRankView(APIView):
         # 해당 유저의 식후 혈당량 가져오기
         try:
             high_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
-                                                             created_at__date__range=[start_date, end_date]).order_by(
-                '-level')
+                                                             created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
+                '-avg_level')
             low_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
-                                                            created_at__date__range=[start_date, end_date]).order_by(
-                'level')
+                                                            created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
+                'avg_level')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        high_blood_serializer = BloodDietSerializer(high_blood_list, many=True, context={"request": request})
-        low_blood_serializer = BloodDietSerializer(low_blood_list, many=True, context={'request': request})
 
         # best top 3
         for i in range(0, 3):
             try:
-                best.append(low_blood_serializer.data[i]['diet'])
-            except:
-                break
+                diet_id = low_blood_list[i]['diet_id']
+                diet_data = Data.objects.get(id=diet_id)
+                diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
+                best.append(diet_serializer.data)
+
+            except Exception as e:
+                return Response('아직 best&worst 식단이 없습니다.', status=status.HTTP_404_NOT_FOUND)
 
         # worst top 3
         for i in range(0, 3):
             try:
-                worst.append(high_blood_serializer.data[i]['diet'])
-            except:
-                break
+                diet_id = high_blood_list[i]['diet_id']
+                diet_data = Data.objects.get(id=diet_id)
+                diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
+                worst.append(diet_serializer.data)
+
+            except Exception as e:
+                return Response('아직 best&worst 식단이 없습니다.', status=status.HTTP_404_NOT_FOUND)
 
         res_data = {
             'best': best,
