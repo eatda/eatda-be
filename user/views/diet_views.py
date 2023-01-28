@@ -1,6 +1,7 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
@@ -309,21 +310,26 @@ class DietFitView(APIView):
         end_date = datetime.now().date()  # 현재 날짜
         start_date = end_date - timedelta(days=6)  # 일주일 전 날짜
 
-        # 일주일 이내 식후 혈당량 오름차순 정렬해서 가져오기
+        # 일주일 이내 식단 별 식후 혈당량 오름차순 정렬해서 가져오기
         try:
             blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
-                                                        created_at__date__range=[start_date, end_date]).order_by(
-                'level')
+                                                        created_at__date__range=[start_date, end_date]).values(
+                'diet').annotate(avg_level=Avg('level')).order_by(
+                'avg_level')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if blood_list.count() < 3:
             return Response({"error": "아직 나에게 딱 맞는 레시피가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-        res_data = []
-        serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
+        diet_list = []
         for i in range(0, 2):
-            serializer.data[i]["diet"]["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id, diet_id=
-            serializer.data[i]["diet"]["id"]).exists() else False
-            res_data.append(serializer.data[i]["diet"])
+            diet_list.append(Data.objects.get(id=blood_list[i]["diet"]))
+
+        res_data = []
+        serializer = DietSimpleSerializer(diet_list, many=True, context={"request": request})
+        for i in range(0, 2):
+            serializer.data[i]["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id, diet_id=
+            serializer.data[i]["id"]).exists() else False
+            res_data.append(serializer.data[i])
         return Response(res_data, status=status.HTTP_200_OK)
