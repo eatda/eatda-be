@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from diet.models import DietAllergy, Filter, FilterCategory, Data
+from django_svg_image_form_field import SvgAndImageFormField
 
 
 class DietAllergySerializer(serializers.ModelSerializer):
@@ -17,27 +18,17 @@ class FilterCategorySerializer(serializers.ModelSerializer):
 
 class FilterSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField(read_only=True)
-    image = serializers.SerializerMethodField(read_only=True)
-    image_selected = serializers.SerializerMethodField(read_only=True)
 
     def get_category(self, obj):
         return obj.category.id
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-        return None
-
-    def get_image_selected(self, obj):
-        request = self.context.get('request')
-        if obj.image_selected:
-            return request.build_absolute_uri(obj.image_selected.url)
-        return None
-
     class Meta:
         model = Filter
         fields = ['id', 'name', 'category', 'image', 'image_selected']
+        field_classes = {
+            'image': SvgAndImageFormField,
+            'image_selected': SvgAndImageFormField,
+        }
 
 
 class DietDataSerializer(serializers.ModelSerializer):
@@ -45,13 +36,6 @@ class DietDataSerializer(serializers.ModelSerializer):
     ingredient = serializers.JSONField(default=list)
     recipe = serializers.JSONField(default=list)
     tip = serializers.JSONField(default=list)
-    image = serializers.SerializerMethodField(read_only=True)
-
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-        return None
 
     def get_menu(self, obj):
         return obj.menu
@@ -60,18 +44,16 @@ class DietDataSerializer(serializers.ModelSerializer):
         model = Data
         fields = ['id', 'name', 'image', 'menu', 'carbohydrate', 'protein', 'province', 'salt', 'total_calorie', 'ingredient',
                   'recipe', 'tip', 'user_id', 'type_id', 'flavor_id', 'carbohydrate_type_id']
+        field_classes = {
+            'image': SvgAndImageFormField,
+        }
 
 
 # 식단 정보 간략하게
 class DietSimpleSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField(read_only=True)
-
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return request.build_absolute_uri(obj.image.url)
-        return None
-
     class Meta:
         model = Data
         fields = ['id', 'name', 'image']
+        field_classes = {
+            'image': SvgAndImageFormField,
+        }
