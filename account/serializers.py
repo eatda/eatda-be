@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import NotFound
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
@@ -64,7 +65,7 @@ class LoginSerializer(serializers.ModelSerializer):
         if User.objects.filter(social_id=social_id, email=email).exists():
             user = User.objects.get(social_id=social_id, email=email)
         else:
-            raise serializers.ValidationError("user account not exist")
+            raise NotFound(detail='User not exist')
 
         token = RefreshToken.for_user(user)  # 토큰 생성
         refresh_token = str(token)  # refresh 토큰
