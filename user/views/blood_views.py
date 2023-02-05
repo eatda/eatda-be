@@ -25,7 +25,7 @@ class BloodSugarLevelView(APIView):
         # 같은 그룹 내의 식후 혈당량 가져오기
         try:
             blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False).order_by(
-                '-created_at')
+                '-created_at__date', 'timeline')
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         serializer = BloodDietSerializer(blood_list, many=True, context={"request": request})
@@ -36,7 +36,7 @@ class BloodSugarLevelView(APIView):
         data = []  # 식후 혈당량 리스트
         for blood in serializer.data:
             if blood["date"] == prev_date:
-                data.insert(0, blood)
+                data.append(blood)
             else:
                 if prev_date is not '':
                     res_data.append({"date": prev_date[3:8], "data": data})
