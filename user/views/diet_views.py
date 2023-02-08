@@ -263,17 +263,17 @@ class DietRankView(APIView):
         try:
             high_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
                                                              created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
-                '-avg_level')
+                '-avg_level')[:3]
             low_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
                                                             created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
-                'avg_level')
+                'avg_level')[:3]
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         # best top 3
-        for i in range(0, 3):
+        for diet in low_blood_list:
             try:
-                diet_id = low_blood_list[i]['diet_id']
+                diet_id = diet['diet_id']
                 diet_data = Data.objects.get(id=diet_id)
                 diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
                 best.append(diet_serializer.data)
@@ -282,9 +282,9 @@ class DietRankView(APIView):
                 return Response('아직 best&worst 식단이 없습니다.', status=status.HTTP_404_NOT_FOUND)
 
         # worst top 3
-        for i in range(0, 3):
+        for diet in high_blood_list:
             try:
-                diet_id = high_blood_list[i]['diet_id']
+                diet_id = diet['diet_id']
                 diet_data = Data.objects.get(id=diet_id)
                 diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
                 worst.append(diet_serializer.data)
@@ -328,13 +328,13 @@ class DietFitView(APIView):
             return Response({"error": "아직 나에게 딱 맞는 레시피가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         diet_list = []
-        for i in range(0, 2):
-            diet_list.append(Data.objects.get(id=blood_list[i]["diet"]))
+        for data in blood_list[:2]:
+            diet_list.append(Data.objects.get(id=data["diet"]))
 
         res_data = []
         serializer = DietSimpleSerializer(diet_list, many=True, context={"request": request})
-        for i in range(0, 2):
-            serializer.data[i]["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id, diet_id=
-            serializer.data[i]["id"]).exists() else False
-            res_data.append(serializer.data[i])
+        for data in serializer.data:
+            data["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id, diet_id=
+            data["id"]).exists() else False
+            res_data.append(data)
         return Response(res_data, status=status.HTTP_200_OK)
