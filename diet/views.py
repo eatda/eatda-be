@@ -141,7 +141,9 @@ class DietDataDetailView(APIView):
 # 식단 전체 리스트 가져오는 API
 class DietDataView(APIView):
     def get_query_array(self, query):  # 쿼리 스트링 array로 변환
-        return [int(x) for x in query.split(',')]
+        filter_list = [int(x) for x in query.split(',')]
+        self.filter_cnt += len(filter_list)
+        return filter_list
 
     def get_min_max_kcal(self, amr):  # 활동대사량에 따른 칼로리 범위
         if amr is None:
@@ -207,6 +209,7 @@ class DietDataView(APIView):
         # 필터 만들기
         q = Q()
         q &= Q(id__in=fit_diet.values('id'))  # union으로 합쳤을 때 쓸 수 있는 코드. 다시 filter 걸기 (필터 예외 막기 위해 id 한 번 더 필터)
+        self.filter_cnt = 0  # 필터 개수
         if type:  # 음식 종류
             q &= Q(type_id__in=self.get_query_array(type))
         if flavor:  # 맛
@@ -221,10 +224,14 @@ class DietDataView(APIView):
             query_list = self.get_query_array(vegetable)
             q &= self.get_filter_ingredient(query_list)
 
-        fit_diet = fit_diet.filter(q).distinct()
+        if self.filter_cnt == Filter.objects.all().count():  # 필터 모두 선택
+            fit_diet = fit_diet.distinct()
+        else:
+            fit_diet = fit_diet.filter(q).distinct()
         serializer = DietSimpleSerializer(fit_diet, many=True, context={"request": request})
         for data in serializer.data:  # 본인의 좋아요 여부
             data["is_me_liked"] = True if OurPick.objects.filter(user_id=user_id,
                                                                  diet_id=data["id"]).exists() else False
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
