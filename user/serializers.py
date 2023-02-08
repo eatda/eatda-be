@@ -157,6 +157,15 @@ class GroupSerializer(serializers.ModelSerializer):
 class BloodDietSerializer(serializers.ModelSerializer):
     diet = serializers.SerializerMethodField(read_only=True)
     date = serializers.SerializerMethodField(read_only=True)
+    range = serializers.SerializerMethodField(read_only=True)
+
+    def get_range(self, obj):
+        if obj.level >= 140:  # 고혈당
+            return 2
+        elif obj.level >= 70:  # 정상 혈당
+            return 1
+        else:  # 저혈당
+            return 0
 
     def get_diet(self, obj):
         diet_serializer = DietSimpleSerializer(obj.diet, context=self.context)
@@ -168,7 +177,7 @@ class BloodDietSerializer(serializers.ModelSerializer):
     class Meta:
         model = BloodSugarLevel
         depth = 1
-        fields = ['id', 'diet', 'date', 'time', 'level', 'timeline']
+        fields = ['id', 'diet', 'date', 'time', 'level', 'timeline', 'range']
         read_only_fields = ('id',)
 
 
