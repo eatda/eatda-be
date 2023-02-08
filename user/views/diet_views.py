@@ -166,7 +166,7 @@ class OurPickView(APIView):
         total_popular = []  # 최종적으로 2개 이상 선택된 diet_id 리스트
 
         # 내림차순 순으로 2개 이상 선택된 diet_list 저장하기
-        for key in sorted(popular_cnt_list.keys(), reverse=True):
+        for key, value in sorted(popular_cnt_list.items()):
             if popular_cnt_list[key] >= 2:
                 total_popular.append(key)
 
