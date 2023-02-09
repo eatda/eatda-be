@@ -184,10 +184,19 @@ class BloodDietSerializer(serializers.ModelSerializer):
 # 식후 혈당량 정보
 class BloodSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(write_only=True)
+    range = serializers.SerializerMethodField(read_only=True)
+
+    def get_range(self, obj):
+        if obj.level >= 140:  # 고혈당
+            return 2
+        elif obj.level >= 70:  # 정상 혈당
+            return 1
+        else:  # 저혈당
+            return 0
 
     class Meta:
         model = BloodSugarLevel
-        fields = ['id', 'time', 'level', 'timeline']
+        fields = ['id', 'time', 'level', 'timeline', 'range']
         read_only_fields = ('timeline',)
         extra_kwargs = {
             'time': {'required': True},

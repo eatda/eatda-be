@@ -166,7 +166,7 @@ class OurPickView(APIView):
         total_popular = []  # 최종적으로 2개 이상 선택된 diet_id 리스트
 
         # 내림차순 순으로 2개 이상 선택된 diet_list 저장하기
-        for key, value in sorted(popular_cnt_list.items(), key = lambda item: item[1], reverse = True):
+        for key, value in sorted(popular_cnt_list.items(), key=lambda item: item[1], reverse=True):
             if popular_cnt_list[key] >= 2:
                 total_popular.append(key)
 
@@ -262,35 +262,36 @@ class DietRankView(APIView):
         # 해당 유저의 식후 혈당량 가져오기
         try:
             high_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
-                                                             created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
+                                                             created_at__date__range=[start_date, end_date]).values(
+                'diet_id').annotate(avg_level=Avg('level')).order_by(
                 '-avg_level')[:3]
             low_blood_list = BloodSugarLevel.objects.filter(user_id__group=user.group_id, level__isnull=False,
-                                                            created_at__date__range=[start_date, end_date]).values('diet_id').annotate(avg_level=Avg('level')).order_by(
+                                                            created_at__date__range=[start_date, end_date]).values(
+                'diet_id').annotate(avg_level=Avg('level')).order_by(
                 'avg_level')[:3]
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 베스트 & 워스트 식단 기준 만족하지 못한 경우 (식단 3개 이하)
+        if high_blood_list.count() < 3:
+            return Response({
+                'best': [],
+                'worst': []
+            }, status=status.HTTP_200_OK)
+
         # best top 3
         for diet in low_blood_list:
-            try:
-                diet_id = diet['diet_id']
-                diet_data = Data.objects.get(id=diet_id)
-                diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
-                best.append(diet_serializer.data)
-
-            except Exception as e:
-                return Response('아직 best&worst 식단이 없습니다.', status=status.HTTP_404_NOT_FOUND)
+            diet_id = diet['diet_id']
+            diet_data = Data.objects.get(id=diet_id)
+            diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
+            best.append(diet_serializer.data)
 
         # worst top 3
         for diet in high_blood_list:
-            try:
-                diet_id = diet['diet_id']
-                diet_data = Data.objects.get(id=diet_id)
-                diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
-                worst.append(diet_serializer.data)
-
-            except Exception as e:
-                return Response('아직 best&worst 식단이 없습니다.', status=status.HTTP_404_NOT_FOUND)
+            diet_id = diet['diet_id']
+            diet_data = Data.objects.get(id=diet_id)
+            diet_serializer = DietSimpleSerializer(diet_data, context={"request": request})
+            worst.append(diet_serializer.data)
 
         res_data = {
             'best': best,
@@ -325,7 +326,7 @@ class DietFitView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if blood_list.count() < 3:
-            return Response({"error": "아직 나에게 딱 맞는 레시피가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            return Response([], status=status.HTTP_200_OK)
 
         diet_list = []
         for data in blood_list[:2]:
