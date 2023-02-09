@@ -65,7 +65,7 @@ class BloodSugarLevel(BaseModel):
         AFTERNOON = 1  # 점심
         NIGHT = 2  # 저녁
 
-    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
+    user = models.ForeignKey(Info, on_delete=models.CASCADE)  # 유저 id
     diet = models.ForeignKey(Data, on_delete=models.SET_NULL, null=True)  # 식단 id
     time = models.CharField(max_length=8, default=None, null=True)  # 혈당측정시간
     level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(300)], default=None,
@@ -89,7 +89,7 @@ class Like(BaseModel):
         AFTERNOON = 1  # 점심
         NIGHT = 2  # 저녁
 
-    user = models.ForeignKey(Info, on_delete=models.SET_NULL, null=True)  # 유저 id
+    user = models.ForeignKey(Info, on_delete=models.CASCADE)  # 유저 id
     react = models.IntegerField(choices=ReactionType.choices, default=ReactionType.HEART)  # 좋아요 반응
     target = models.IntegerField(choices=TargetType.choices)  # 좋아요 대상 필드
     timeline = models.IntegerField(choices=TimelineType.choices)  # 시간대
